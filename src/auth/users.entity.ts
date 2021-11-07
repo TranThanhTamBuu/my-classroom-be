@@ -13,6 +13,9 @@ export class Users {
   password: string;
 
   @Column()
+  photo: string;
+
+  @Column()
   name: string;
 
   @Column()
