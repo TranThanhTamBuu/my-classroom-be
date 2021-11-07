@@ -17,4 +17,13 @@ export class Classes {
 
   @Column()
   room: string;
+
+  @Column()
+  createdBy: string;
+
+  @Column()
+  students: string[];
+
+  @Column()
+  teachers: string[];
 }

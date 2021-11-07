@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Classes } from './classes.entity';
 import { Repository } from 'typeorm';
 import { CreateClassDto } from './dto/create-class.dto';
+import { Users } from 'src/auth/users.entity';
 
 @Injectable()
 export class ClassesService {
@@ -10,11 +11,29 @@ export class ClassesService {
     @InjectRepository(Classes) private classesRepository: Repository<Classes>,
   ) {}
 
-  async getClasses(): Promise<Classes[]> {
-    return this.classesRepository.find();
+  async getTeacherClasses(teacher: Users): Promise<Classes[]> {
+    return this.classesRepository.find({
+      where: {
+        $or: [
+          { teachers: { $all: [teacher._id] } },
+          { createdBy: teacher._id },
+        ],
+      },
+    });
   }
 
-  async createClass(createClassDto: CreateClassDto): Promise<Classes> {
+  async getStudentClasses(student: Users): Promise<Classes[]> {
+    return this.classesRepository.find({
+      where: {
+        students: { $all: [student.studentId] },
+      },
+    });
+  }
+
+  async createClass(
+    createClassDto: CreateClassDto,
+    creator: Users,
+  ): Promise<Classes> {
     const { name, section, room, subject } = createClassDto;
 
     const newClass = this.classesRepository.create({
@@ -22,6 +41,7 @@ export class ClassesService {
       section,
       room,
       subject,
+      createdBy: creator._id,
     });
 
     return this.classesRepository.save(newClass);
