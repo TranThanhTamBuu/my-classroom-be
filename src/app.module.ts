@@ -7,6 +7,7 @@ import 'dotenv/config';
 import { AppController } from './app.controller';
 import MailService from './mail/mail.service';
 import { AppService } from './app.service';
+import { Users } from './auth/users.entity';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { AppService } from './app.service';
       url: process.env.DB_URL,
       synchronize: true,
       useUnifiedTopology: true,
-      entities: [Classes],
+      entities: [Classes, Users],
     }),
     ClassesModule,
     AuthModule,
