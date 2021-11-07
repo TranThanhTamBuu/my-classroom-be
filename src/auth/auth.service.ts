@@ -8,12 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SignUpDto } from './dto/sign-up.dto';
 import { Users } from './users.entity';
-import { ERROR_CODE } from '../constants/error.constant';
+import { ERROR_CODE } from '../constants/const';
 import * as bcrypt from 'bcrypt';
 import { SignInDto } from './dto/sign-in.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtAccessToken } from './interfaces/jwt-access-token.interface';
+import { ThirdPartyDto } from './dto/third-party.dto';
+import { ThirdPartyPayload } from './interfaces/third-party-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -44,10 +46,6 @@ export class AuthService {
     try {
       await this.usersRepository.save(user);
     } catch (error) {
-      console.log(
-        '🚀 ~ file: auth.service.ts ~ line 47 ~ AuthService ~ signUp ~ error',
-        error,
-      );
       if (error.code === ERROR_CODE.DUPLICATE) {
         throw new ConflictException();
       } else {
@@ -73,5 +71,32 @@ export class AuthService {
     } else {
       throw new UnauthorizedException();
     }
+  }
+
+  async verifyThirdPartyAuthentication(
+    thirdPartyDto: ThirdPartyDto,
+  ): Promise<ThirdPartyPayload> {
+    const { email, photo } = thirdPartyDto;
+
+    const user = await this.usersRepository.findOne({ email });
+
+    if (!user)
+      return {
+        exception: new UnauthorizedException(),
+      };
+
+    await this.usersRepository.update({ email }, { photo });
+    const { accessToken } = await this.getAccessToken(user.email);
+
+    return {
+      accessToken,
+    };
+  }
+
+  thirdPartyRedirectURL(thirdPartyPayload: ThirdPartyPayload): string {
+    const { accessToken, exception } = thirdPartyPayload;
+    return `${process.env.FE_URL}/oauth?accessToken=${
+      accessToken || ''
+    }&statusCode=${exception.getStatus() || ''}`;
   }
 }

@@ -1,20 +1,13 @@
 import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
-export class SignUpDto {
+export class ThirdPartyDto {
   @IsString()
   @MinLength(8)
   name: string;
 
-  @IsString()
-  @MinLength(8)
-  @Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message: 'Password is not strong enough.',
-  })
-  password: string;
-
   @IsOptional()
   @IsString()
-  studentId: string;
+  photo: string;
 
   @IsString()
   @Matches(
