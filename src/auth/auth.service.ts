@@ -33,7 +33,7 @@ export class AuthService {
     const isStudentExist = (await this.usersRepository.find({ studentId }))
       .length;
     if (studentId && isStudentExist) {
-      throw new ConflictException();
+      throw new ConflictException('Student ID has already been taken.');
     }
 
     const user = this.usersRepository.create({
@@ -47,7 +47,7 @@ export class AuthService {
       await this.usersRepository.save(user);
     } catch (error) {
       if (error.code === ERROR_CODE.DUPLICATE) {
-        throw new ConflictException();
+        throw new ConflictException('Email has already been taken.');
       } else {
         throw new InternalServerErrorException();
       }

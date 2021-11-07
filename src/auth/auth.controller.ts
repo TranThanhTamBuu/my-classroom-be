@@ -18,6 +18,13 @@ import 'dotenv/config';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Get()
+  @UseGuards(AuthGuard())
+  async getCurrentUser(@Req() req) {
+    const { photo, name, email } = req.user;
+    return { photo, name, email };
+  }
+
   @Post('/sign-up')
   async signUp(@Body() signUpDto: SignUpDto): Promise<JwtAccessToken> {
     return this.authService.signUp(signUpDto);
