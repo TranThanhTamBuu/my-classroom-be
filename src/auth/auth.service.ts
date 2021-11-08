@@ -97,6 +97,6 @@ export class AuthService {
     const { accessToken, exception } = thirdPartyPayload;
     return `${process.env.FE_URL}/oauth?accessToken=${
       accessToken || ''
-    }&statusCode=${exception.getStatus() || ''}`;
+    }&statusCode=${exception?.getStatus() || ''}`;
   }
 }
