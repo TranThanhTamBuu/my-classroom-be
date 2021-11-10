@@ -8,6 +8,8 @@ import { AppController } from './app.controller';
 import MailService from './mail/mail.service';
 import { AppService } from './app.service';
 import { Users } from './auth/users.entity';
+import { LinkModule } from './link/link.module';
+import {Link} from './link/link.entity'
 
 @Module({
   imports: [
@@ -16,10 +18,11 @@ import { Users } from './auth/users.entity';
       url: process.env.DB_URL,
       synchronize: true,
       useUnifiedTopology: true,
-      entities: [Classes, Users],
+      entities: [Classes, Users, Link],
     }),
     ClassesModule,
     AuthModule,
+    LinkModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

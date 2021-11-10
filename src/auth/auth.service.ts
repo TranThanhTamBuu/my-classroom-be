@@ -99,4 +99,12 @@ export class AuthService {
       accessToken || ''
     }&statusCode=${exception?.getStatus() || ''}`;
   }
+
+  async getUser(userId: string): Promise<Users> {
+    return this.usersRepository.findOne(userId);
+  }
+
+  async getUserByEmail(email: string): Promise<Users> {
+    return this.usersRepository.findOne({ email: email });
+  }
 }
