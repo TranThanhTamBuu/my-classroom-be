@@ -18,6 +18,6 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
   ],
   providers: [AuthService, JwtStrategy, GoogleStrategy, MicrosoftStrategy],
   controllers: [AuthController],
-  exports: [JwtStrategy, PassportModule, GoogleStrategy, MicrosoftStrategy],
+  exports: [JwtStrategy, PassportModule, GoogleStrategy, MicrosoftStrategy, AuthService],
 })
 export class AuthModule {}

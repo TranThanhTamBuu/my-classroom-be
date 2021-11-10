@@ -42,8 +42,17 @@ export class ClassesService {
       room,
       subject,
       createdBy: creator._id,
+      teachers: [creator._id]
     });
 
     return this.classesRepository.save(newClass);
+  }
+
+  async getAClass(classId: string): Promise<Classes>{
+    return this.classesRepository.findOne(classId);
+  }
+
+  async saveAClass(aClass: Classes){
+    return this.classesRepository.save(aClass);
   }
 }

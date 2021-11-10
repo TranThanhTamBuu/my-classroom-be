@@ -4,12 +4,15 @@ import * as path from 'path';
 import * as hbs from 'nodemailer-express-handlebars';
 import 'dotenv/config';
 import { Injectable } from '@nestjs/common';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export default class MailService {
   private readonly transporter: Mail;
 
-  constructor() {
+  constructor(
+    private authService: AuthService,
+  ) {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -48,6 +51,31 @@ export default class MailService {
         name: 'Tam Buu',
         btnText: 'Activate',
         btnLink: `${process.env.FE_URL}/activate/?token=asd12345`,
+      },
+    };
+
+    try {
+      await this.transporter.sendMail(email);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async sendMail(invitedEmail: string, link: string, className: string) {
+    const aUser = await this.authService.getUserByEmail(invitedEmail);
+    if (aUser == null) {
+      return;
+    }
+    const email = {
+      from: `"My classroom" <${process.env.EMAIL}>`,
+      to: invitedEmail,
+      subject: 'Invite to join ' + className,
+      template: 'test',
+      context: {
+        title: 'Invite to join class' + className,
+        name: aUser.name,
+        btnText: 'Activate',
+        btnLink: link,
       },
     };
 
