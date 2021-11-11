@@ -13,6 +13,8 @@ import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { JwtAccessToken } from './interfaces/jwt-access-token.interface';
 import 'dotenv/config';
+import { Users } from './users.entity';
+import { ChangeProfileDto} from './dto/change-profile.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -55,5 +57,11 @@ export class AuthController {
   @UseGuards(AuthGuard('microsoft'))
   microsoftAuthRedirect(@Req() req, @Res() res) {
     res.redirect(this.authService.thirdPartyRedirectURL(req.user));
+  }
+
+  @Post('/profile')
+  @UseGuards(AuthGuard())
+  async changeProfile(@Req() req, @Body() changeProfileDto: ChangeProfileDto): Promise<Users> {
+    return this.authService.changeUserProfile(req.user, changeProfileDto);
   }
 }
