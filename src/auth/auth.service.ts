@@ -16,6 +16,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtAccessToken } from './interfaces/jwt-access-token.interface';
 import { ThirdPartyDto } from './dto/third-party.dto';
 import { ThirdPartyPayload } from './interfaces/third-party-payload.interface';
+import { ChangeProfileDto } from './dto/change-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -106,5 +107,29 @@ export class AuthService {
 
   async getUserByEmail(email: string): Promise<Users> {
     return this.usersRepository.findOne({ email: email });
+  }
+
+  async getListUser(userIds: string[]): Promise<Users[]> {
+    return this.usersRepository.findByIds(userIds);
+  }
+
+  async getListUserByStuId(stuId: string[]): Promise<Users[]> {
+    return this.usersRepository.find({
+      where: {
+        studentId: { $in: stuId } ,
+      },
+    });
+  }
+
+  async changeUserProfile(user: Users, changeProfileDto: ChangeProfileDto): Promise<Users> {
+    const { name, studentId } = changeProfileDto;
+    const aUser = await this.usersRepository.findOne({ studentId: studentId });
+    if (aUser == null || aUser._id.toString() === user._id.toString()) {
+      user.name = name;
+      user.studentId = studentId;
+      return this.usersRepository.save(user);
+    } else {
+      throw new ConflictException('This Student ID has been used');
+    }
   }
 }

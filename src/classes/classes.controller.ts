@@ -1,5 +1,5 @@
 import { CreateClassDto } from './dto/create-class.dto';
-import { Controller, Post, Get, Body, UseGuards, Req, NotAcceptableException } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req, NotAcceptableException, Param } from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -20,5 +20,11 @@ export class ClassesController {
     const { user } = req;
     if (user.studentId) throw new NotAcceptableException('Student is not allowed to create class');
     return await this.classesService.createClass(createClassDto, user);
+  }
+
+  @Get('/:id')
+  async getClassDetail(@Param('id') id: string) {
+    console.log('getClassDetail');
+    return this.classesService.getClassDetail(id);
   }
 }
