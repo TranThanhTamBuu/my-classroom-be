@@ -123,7 +123,9 @@ export class AuthService {
 
   async changeUserProfile(user: Users, changeProfileDto: ChangeProfileDto): Promise<Users> {
     const { name, studentId } = changeProfileDto;
-    const aUser = await this.usersRepository.findOne({ studentId: studentId });
+    var aUser = null;
+    if (studentId)
+      aUser = await this.usersRepository.findOne({ studentId: studentId });
     if (aUser == null || aUser._id.toString() === user._id.toString()) {
       user.name = name;
       user.studentId = studentId;
