@@ -21,13 +21,16 @@ export class LinkService {
 
     async createInvitationLink(createInvitationLink: CreateInvitationLink, user: Users): Promise<any> {
         const { classId, emailConstrain, inviteEmail } = createInvitationLink;
+        console.log(createInvitationLink);
         const aClass = await this.classService.getAClass(classId);
         if (aClass) {
             if (this.stringArrUtils.IsInClude(aClass.teachers,user._id.toString())) {
                 // create private link and send mail
                 // create expired time: 1 week after creating link:
+                console.log('teacher of class');
                 const expiredTime = Date.now() + 7 * 24 * 3600;
                 if (inviteEmail && inviteEmail.length > 0) {
+                    console.log("invite by mail");
                     const aLink = this.linkRepository.create({
                         isPrivateLink: true,
                         classId: classId,
@@ -36,11 +39,13 @@ export class LinkService {
                         expiredTime: expiredTime,
                     })
                     await this.linkRepository.save(aLink);
-                    const inviteLink = `${process.env.FE_URL}/activate/?token=${aLink._id}`;
+                    const inviteLink = `${process.env.FE_URL}/activate/${aLink._id}`;
                     // send mail:
                     inviteEmail.forEach(val => {
+                        console.log("send to: " + val.toString());
                         this.mailService.sendMail(val.toString(), inviteLink, aClass.name.toString());
                     });
+                    console.log("done");
                     return Promise.resolve({
                         success: true,
                         link: inviteLink,
@@ -58,7 +63,7 @@ export class LinkService {
                     await this.linkRepository.save(aLink);
                     return Promise.resolve({
                         success: true,
-                        link: process.env.FE_URL + '/' + aLink._id,
+                        link: `${process.env.FE_URL}/activate/${aLink._id}`,
                     });
                 }
             } else {
@@ -110,7 +115,35 @@ export class LinkService {
         }
         this.classService.saveAClass(aClass);
         return Promise.resolve({
-            success: true
+            success: true,
+            classId: aClass._id,
         });
+    }
+
+    async checkAuthAcceplink(linkId: string, user: Users): Promise<any> {
+        const aLink = await this.linkRepository.findOne(linkId);
+        console.log("checkAuthAcceplink", linkId, aLink, user);
+        if (aLink == null) {
+            throw new NotFoundException('Invitation Link Not Found');
+        }
+        const email = user.email.toString();
+        if (aLink.emailConstrain && email.includes(aLink.emailConstrain.toString())) {
+            return Promise.resolve({
+                success: true,
+                isAccepted: true,
+            });
+        }
+        if (aLink.inviteEmail && this.stringArrUtils.IsInClude(aLink.inviteEmail, email)) {
+            return Promise.resolve({
+                success: true,
+                isAccepted: true,
+            });
+        }
+        
+        return Promise.resolve({
+            success: true,
+            isAccepted: false,
+        })
+
     }
 }

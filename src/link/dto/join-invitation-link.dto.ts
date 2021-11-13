@@ -1,4 +1,4 @@
-import { IsNotEmptyObject, IsOptional } from "class-validator";
+import { IsNotEmptyObject } from "class-validator";
 
 export class JoinInvitationLink {
 

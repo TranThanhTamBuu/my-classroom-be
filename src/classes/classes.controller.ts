@@ -24,7 +24,6 @@ export class ClassesController {
 
   @Get('/:id')
   async getClassDetail(@Param('id') id: string) {
-    console.log('getClassDetail');
     return this.classesService.getClassDetail(id);
   }
 }
