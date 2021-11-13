@@ -139,6 +139,13 @@ export class LinkService {
                 isAccepted: true,
             });
         }
+
+        if (!aLink.emailConstrain && !aLink.inviteEmail) {
+            return Promise.resolve({
+                success: true,
+                isAccepted: true,
+            });
+        }
         
         return Promise.resolve({
             success: true,
