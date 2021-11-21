@@ -26,4 +26,7 @@ export class Classes {
 
   @Column()
   teachers: string[];
+
+  @Column()
+  assignments: string[];
 }
