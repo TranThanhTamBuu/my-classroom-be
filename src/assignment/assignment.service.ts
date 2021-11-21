@@ -42,7 +42,7 @@ export class AssignmentsService {
         
         const assignTime = Date.now();
         var assignments = [this.assignmentsRepository.create()];
-        listAssignment.forEach(async (val) => {
+        listAssignment.forEach((val) => {
             const newAssignment = this.assignmentsRepository.create({
                 title: val.title,
                 description: val.description,
