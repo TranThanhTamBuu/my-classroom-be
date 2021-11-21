@@ -29,4 +29,7 @@ export class Assignments {
 
     @Column()
     classId: string;
+
+    @Column()
+    position: number;
 }

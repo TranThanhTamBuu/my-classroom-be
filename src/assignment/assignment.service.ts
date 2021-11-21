@@ -19,6 +19,7 @@ export class AssignmentsService {
 
     async getAllAssignmentOfClass(user: Users, classId: string): Promise<Assignments[]> {
         const aClass = await this.classesService.getAClass(classId);
+        console.log(aClass.assignments);
         if (user.studentId && this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString()) || this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
             return this.assignmentsRepository.find({
                 where: {
@@ -32,29 +33,35 @@ export class AssignmentsService {
         }
     }
 
-    async createAssignment(user: Users, createDto: CreateAssignmentDto): Promise<Assignments>{
-        const { title, description, totalPoint, expiredTime, classId } = createDto;
+    async createAssignments(user: Users, createDto: CreateAssignmentDto): Promise<Assignments[]> {
+        const { listAssignment, classId } = createDto;
         const aClass = await this.classesService.getAClass(classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) 
+        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString()))
             throw new UnauthorizedException();
         
         
         const assignTime = Date.now();
-        const newAssignment = this.assignmentsRepository.create({
-            title,
-            description,
-            assignTime: assignTime,
-            expiredTime: expiredTime,
-            totalPoint: totalPoint,
-            teacherName: user.name,
-            teacherId: user._id,
-            classId
+        var assignments = [this.assignmentsRepository.create()];
+        listAssignment.forEach(async (val) => {
+            const newAssignment = this.assignmentsRepository.create({
+                title: val.title,
+                description: val.description,
+                assignTime: assignTime,
+                expiredTime: val.expiredTime,
+                totalPoint: val.totalPoint,
+                teacherName: user.name,
+                teacherId: user._id,
+                classId,
+                position: val.position,
+            });
+            assignments.push(newAssignment);
         });
-        var temp = await this.assignmentsRepository.save(newAssignment);
-        if (aClass.assignments)
-            aClass.assignments.push(temp._id);
-        else
-            aClass.assignments = [temp._id];
+        assignments.shift();
+        const temp = await this.assignmentsRepository.save(assignments);
+        aClass.assignments = [];
+        for (let val of temp) {
+            aClass.assignments.push(val._id);
+        }
         this.classesService.saveAClass(aClass);
         return temp;
     }
@@ -73,24 +80,63 @@ export class AssignmentsService {
             aClass.assignments = aClass.assignments.filter(function (value) {
                 return value.toString() !== assignmentId;
             });
-
+        var listAssignments = await this.assignmentsRepository.find({
+            where: {
+                _id: {
+                    $in: aClass.assignments
+                }
+            }
+        });
+        for (let val of listAssignments) {
+            if (val.position > anAssignment.position)
+                val.position -= 1;
+        }
+        this.assignmentsRepository.save(listAssignments);
         return this.classesService.saveAClass(aClass);
     }
 
-    async modifyAssignment(user: Users, modifyDto: ModifyAssignmentDto): Promise<Assignments> {
-        const { assignmentId, title, description, totalPoint, expiredTime, classId } = modifyDto;
+    async modifyAssignments(user: Users, modifyDto: ModifyAssignmentDto): Promise<any> {
+        const { listAssignment, classId } = modifyDto;
         const aClass = await this.classesService.getAClass(classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id))
+        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString()))
             throw new UnauthorizedException();
         
-        var anAssignment = await this.assignmentsRepository.findOne(assignmentId);
-        if (!anAssignment || anAssignment.classId !== classId)
-            throw new NotFoundException();
-        
-        anAssignment.title = title;
-        anAssignment.description = description;
-        anAssignment.totalPoint = totalPoint;
-        anAssignment.expiredTime = expiredTime;
-        return this.assignmentsRepository.save(anAssignment);
+        var newAssignmentList = [this.assignmentsRepository.create()];
+        const assignTime = Date.now();
+        for (let val of listAssignment) {
+            if (val._id) {
+                var anAssignment = await this.assignmentsRepository.findOne(val._id);
+                if (!anAssignment || anAssignment.classId !== classId)
+                    throw new NotFoundException();
+
+                anAssignment.title = val.title;
+                anAssignment.description = val.description;
+                anAssignment.totalPoint = val.totalPoint;
+                anAssignment.expiredTime = val.expiredTime;
+                anAssignment.position = val.position;
+                newAssignmentList.push(anAssignment);
+            } else {
+                const newAssignment = this.assignmentsRepository.create({
+                    title: val.title,
+                    description: val.description,
+                    assignTime: assignTime,
+                    expiredTime: val.expiredTime,
+                    totalPoint: val.totalPoint,
+                    teacherName: user.name,
+                    teacherId: user._id,
+                    classId,
+                    position: val.position,
+                });
+                newAssignmentList.push(newAssignment);
+            }
+        }
+        newAssignmentList.shift();
+        const temp = await this.assignmentsRepository.save(newAssignmentList);
+        aClass.assignments = [];
+        temp.forEach((val) => {
+            aClass.assignments.push(val._id);
+        })
+        this.classesService.saveAClass(aClass);
+        return temp;
     }
 }

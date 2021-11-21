@@ -18,7 +18,7 @@ export class AssignmentsController {
     @Post()
     async createAnAssignment(@Req() req, @Body() createAssignmentDto: CreateAssignmentDto) {
         const { user } = req;
-        return this.assignmentsService.createAssignment(user, createAssignmentDto);
+        return this.assignmentsService.createAssignments(user, createAssignmentDto);
     }
 
     @Delete('/:id')
@@ -30,6 +30,6 @@ export class AssignmentsController {
     @Put()
     async updateAssignment(@Req() req, @Body() modifyAssignmentDto: ModifyAssignmentDto) {
         const { user } = req;
-        return this.assignmentsService.modifyAssignment(user, modifyAssignmentDto);
+        return this.assignmentsService.modifyAssignments(user, modifyAssignmentDto);
     }
 }

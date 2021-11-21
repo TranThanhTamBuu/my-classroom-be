@@ -3,19 +3,21 @@ import { IsNotEmptyObject, IsOptional } from 'class-validator';
 export class ModifyAssignmentDto {
 
     @IsNotEmptyObject()
-    assignmentId: string;
+    listAssignment: [{
 
-    @IsNotEmptyObject()
-    title: string;
+        _id: string;
 
-    @IsOptional()
-    description: string;
+        title: string;
 
-    @IsNotEmptyObject()
-    totalPoint: number;
+        description: string;
 
-    @IsOptional()
-    expiredTime: number;
+        totalPoint: number;
+
+        expiredTime: number;
+        
+        position: number;
+
+    }];
 
     @IsNotEmptyObject()
     classId: string;
