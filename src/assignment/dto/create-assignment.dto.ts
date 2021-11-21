@@ -1,17 +1,20 @@
-import { IsNotEmptyObject, IsOptional } from 'class-validator';
+import { IsNotEmptyObject } from 'class-validator';
 
 export class CreateAssignmentDto {
-    @IsNotEmptyObject()
-    title: string;
-
-    @IsOptional()
-    description: string;
 
     @IsNotEmptyObject()
-    totalPoint: number;
+    listAssignment: [{
+        title: string;
 
-    @IsOptional()
-    expiredTime: number;
+        description: string;
+
+        totalPoint: number;
+
+        expiredTime: number;
+        
+        position: number;
+
+    }];
 
     @IsNotEmptyObject()
     classId: string;
