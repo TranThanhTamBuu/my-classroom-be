@@ -19,15 +19,17 @@ export class AssignmentsService {
 
     async getAllAssignmentOfClass(user: Users, classId: string): Promise<Assignments[]> {
         const aClass = await this.classesService.getAClass(classId);
-        console.log(aClass.assignments);
         if (user.studentId && this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString()) || this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
-            return this.assignmentsRepository.find({
-                where: {
-                    _id: {
-                        $in: aClass.assignments
+            if (aClass.assignments)
+                return this.assignmentsRepository.find({
+                    where: {
+                        _id: {
+                            $in: aClass.assignments
+                        }
                     }
-                }
-            });
+                });
+            else
+                return [];
         } else {
             throw new UnauthorizedException();
         }
