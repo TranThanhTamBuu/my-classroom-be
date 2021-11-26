@@ -29,4 +29,7 @@ export class Classes {
 
   @Column()
   assignments: string[];
+
+  @Column()
+  gradeList: string;
 }
