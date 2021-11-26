@@ -1,7 +1,8 @@
 import { CreateClassDto } from './dto/create-class.dto';
-import { Controller, Post, Get, Body, UseGuards, Req, NotAcceptableException, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req, NotAcceptableException, Param, Put } from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { AuthGuard } from '@nestjs/passport';
+import { SetGradeListDto } from './dto/set-gradeList.dto';
 
 @Controller('classes')
 @UseGuards(AuthGuard())
@@ -25,5 +26,17 @@ export class ClassesController {
   @Get('/:id')
   async getClassDetail(@Param('id') id: string) {
     return this.classesService.getClassDetail(id);
+  }
+
+  @Get('gradeList/:id')
+  async getClassGradeList(@Req() req, @Param('id') id: string) {
+    const { user } = req;
+    return this.classesService.getClassGradeList(id, user);
+  }
+
+  @Put('gradeList')
+  async setClassGradeList(@Req() req, @Body() setGradeListDto: SetGradeListDto) {
+    const { user } = req;
+    return this.classesService.setClassGradeList(user, setGradeListDto);
   }
 }
