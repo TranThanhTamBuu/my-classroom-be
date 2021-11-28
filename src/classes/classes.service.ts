@@ -19,7 +19,7 @@ export class ClassesService {
     return this.classesRepository.find({
       where: {
         $or: [
-          { teachers: { $all: [teacher._id] } },
+          { teachers: { $all: [teacher._id.toString()] } },
           { createdBy: teacher._id },
         ],
       },

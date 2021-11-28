@@ -6,7 +6,6 @@ import { CreateInvitationLink } from './dto/create-invitation-link.dto';
 import { ClassesService } from 'src/classes/classes.service';
 import { JoinInvitationLink } from './dto/join-invitation-link.dto';
 import { Users } from 'src/auth/users.entity';
-import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 import MailService from 'src/mail/mail.service';
 
 
@@ -15,7 +14,6 @@ export class LinkService {
     constructor(
         @InjectRepository(Link) private linkRepository: Repository<Link>,
         private classService: ClassesService,
-        private stringArrUtils: StringArraryUtils,
         private mailService: MailService,
     ) { }
 
@@ -24,7 +22,7 @@ export class LinkService {
         console.log(createInvitationLink);
         const aClass = await this.classService.getAClass(classId);
         if (aClass) {
-            if (this.stringArrUtils.IsInClude(aClass.teachers,user._id.toString())) {
+            if (aClass.teachers.includes(user._id.toString())) {
                 // create private link and send mail
                 // create expired time: 1 week after creating link:
                 console.log('teacher of class');
@@ -83,7 +81,7 @@ export class LinkService {
 
         if (aLink.isPrivateLink) {
             // private link
-            if (Date.now() >= aLink.expiredTime || !this.stringArrUtils.IsInClude(aLink.inviteEmail,user.email.toString())) {
+            if (Date.now() >= aLink.expiredTime || !aLink.inviteEmail.includes(user.email.toString())) {
                 throw new NotAcceptableException('You are not invited to this class or invite link is expired');
             }
         }
@@ -96,8 +94,8 @@ export class LinkService {
         if (aClass == null) {
             throw new NotFoundException('This class was deleted');
         }
-        if (user.studentId && aClass.students && this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString()) ||
-            this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (user.studentId && aClass.students && aClass.students.includes(user.studentId.toString()) ||
+            aClass.teachers.includes(user._id.toString())) {
             throw new NotAcceptableException('You have already joined i nthis class');
         }
 
@@ -133,7 +131,7 @@ export class LinkService {
                 isAccepted: true,
             });
         }
-        if (aLink.inviteEmail && this.stringArrUtils.IsInClude(aLink.inviteEmail, email)) {
+        if (aLink.inviteEmail && aLink.inviteEmail.includes(email)) {
             return Promise.resolve({
                 success: true,
                 isAccepted: true,

@@ -5,10 +5,9 @@ import { AssignmentsService } from './assignment.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { ClassesModule } from 'src/classes/classes.module';
-import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Assignments]), AuthModule, ClassesModule, StringArraryUtils],
+    imports: [TypeOrmModule.forFeature([Assignments]), AuthModule, ClassesModule],
     controllers: [AssignmentsController],
     providers: [AssignmentsService]
 })

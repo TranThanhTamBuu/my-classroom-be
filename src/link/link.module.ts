@@ -5,11 +5,10 @@ import { LinkController } from './link.controller';
 import {Link} from './link.entity'
 import { LinkService } from './link.service';
 import { ClassesModule } from 'src/classes/classes.module';
-import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 import MailService from 'src/mail/mail.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Link]), AuthModule, ClassesModule, StringArraryUtils],
+    imports: [TypeOrmModule.forFeature([Link]), AuthModule, ClassesModule],
     controllers: [LinkController],
     providers: [LinkService, MailService],
 })
