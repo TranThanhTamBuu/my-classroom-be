@@ -63,7 +63,7 @@ export class ClassesService {
 
   async getClassDetail(classId: string): Promise<any>{
     const aClass = await this.classesRepository.findOne(classId);
-    if (aClass == null) {
+    if (aClass === null) {
       throw new NotFoundException('Class id is not Found');
     }
     const listStudent = await this.authService.getListUserByStuId(aClass.students);
@@ -84,7 +84,7 @@ export class ClassesService {
 
   async getClassGradeList(classId: string, user: Users): Promise<string> {
     const aClass = await this.classesRepository.findOne(classId);
-    if (aClass == null) {
+    if (aClass === null) {
       throw new NotFoundException('Class id is not Found');
     }
     if (!aClass.teachers.includes(user._id.toString()) || (user.studentId && !aClass.students.includes(user.studentId.toString()))) {
@@ -96,7 +96,7 @@ export class ClassesService {
   async setClassGradeList(user: Users, setGradeListDto: SetGradeListDto): Promise<Classes>{
     const { classId, gradeListJsonString } = setGradeListDto;
     const aClass = await this.classesRepository.findOne(classId);
-    if (aClass == null) {
+    if (aClass === null) {
       throw new NotFoundException('Class id is not Found');
     }
     if (!aClass.teachers.includes(user._id.toString())) {
@@ -109,7 +109,7 @@ export class ClassesService {
   async setListStudent(user: Users, setListStudent: SetListStudentDto): Promise<Classes> {
     const { classId, listStudent } = setListStudent;
     const aClass = await this.classesRepository.findOne(classId);
-    if (aClass == null) {
+    if (aClass === null) {
       throw new NotFoundException('Class id is not Found');
     }
     if (!aClass.teachers.includes(user._id.toString())) {
