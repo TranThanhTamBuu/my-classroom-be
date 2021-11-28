@@ -31,7 +31,7 @@ export class ClassesController {
 
 
   // dùng để import danh sách ban đầu:
-  @Put('studentList')
+  @Put('/studentList')
   async setStudentList(@Req() req, @Body() setListStudentDto: SetListStudentDto) {
     const { user } = req;
     return this.classesService.setListStudent(user, setListStudentDto);

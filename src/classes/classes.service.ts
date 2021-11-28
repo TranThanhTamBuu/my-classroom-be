@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import { CreateClassDto } from './dto/create-class.dto';
 import { Users } from 'src/auth/users.entity';
 import { AuthService } from 'src/auth/auth.service';
-import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 import { SetGradeListDto } from './dto/set-gradeList.dto';
 import { SetListStudentDto } from './dto/set-list-student.dto';
 
@@ -14,7 +13,6 @@ export class ClassesService {
   constructor(
     @InjectRepository(Classes) private classesRepository: Repository<Classes>,
     private authService: AuthService,
-    private stringArrUtils: StringArraryUtils,
   ) {}
 
   async getTeacherClasses(teacher: Users): Promise<Classes[]> {
@@ -48,7 +46,7 @@ export class ClassesService {
       room,
       subject,
       createdBy: creator._id,
-      teachers: [creator._id],
+      teachers: [creator._id.toString()],
       students:[],
     });
 
@@ -89,7 +87,7 @@ export class ClassesService {
     if (aClass == null) {
       throw new NotFoundException('Class id is not Found');
     }
-    if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString()) || (user.studentId && !this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString()))) {
+    if (!aClass.teachers.includes(user._id.toString()) || (user.studentId && !aClass.students.includes(user.studentId.toString()))) {
       throw new NotAcceptableException('You are not member of this class');
     }
     return aClass.gradeList ? aClass.gradeList : "";
@@ -101,7 +99,7 @@ export class ClassesService {
     if (aClass == null) {
       throw new NotFoundException('Class id is not Found');
     }
-    if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+    if (!aClass.teachers.includes(user._id.toString())) {
       throw new NotAcceptableException('You are not teacher of this class');
     }
     aClass.gradeList = gradeListJsonString;
@@ -114,7 +112,7 @@ export class ClassesService {
     if (aClass == null) {
       throw new NotFoundException('Class id is not Found');
     }
-    if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+    if (!aClass.teachers.includes(user._id.toString())) {
       throw new NotAcceptableException('You are not teacher of this class');
     }
     aClass.listStudent = listStudent;

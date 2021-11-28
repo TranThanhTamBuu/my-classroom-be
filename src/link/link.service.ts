@@ -111,7 +111,7 @@ export class LinkService {
         }
         else {
             // teacher join:
-            aClass.teachers.push(user._id);
+            aClass.teachers.push(user._id.toString());
         }
         this.classService.saveAClass(aClass);
         return Promise.resolve({
