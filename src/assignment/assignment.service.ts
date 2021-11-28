@@ -4,7 +4,6 @@ import { Assignments } from './assignment.entity';
 import { Repository } from 'typeorm';
 import { ClassesService } from 'src/classes/classes.service';
 import { Users } from 'src/auth/users.entity';
-import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { Classes } from 'src/classes/classes.entity';
@@ -15,12 +14,11 @@ export class AssignmentsService {
     constructor(
         @InjectRepository(Assignments) private assignmentsRepository: Repository<Assignments>,
         private classesService: ClassesService,
-        private stringArrUtils: StringArraryUtils,
     ) { }
 
     async getAllAssignmentOfClass(user: Users, classId: string): Promise<Assignments[]> {
         const aClass = await this.classesService.getAClass(classId);
-        if (user.studentId && this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString()) || this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (user.studentId && aClass.students.includes(user.studentId.toString()) || aClass.teachers.includes(user._id.toString())) {
             if (aClass.assignments)
                 return this.assignmentsRepository.find({
                     where: {
@@ -39,7 +37,7 @@ export class AssignmentsService {
     async createAssignments(user: Users, createDto: CreateAssignmentDto): Promise<Assignments[]> {
         const { listAssignment, classId } = createDto;
         const aClass = await this.classesService.getAClass(classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString()))
+        if (!aClass.teachers.includes(user._id.toString()))
             throw new UnauthorizedException();
         
         
@@ -76,7 +74,7 @@ export class AssignmentsService {
         }
 
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new UnauthorizedException();
         }
         if (aClass.assignments)
@@ -101,7 +99,7 @@ export class AssignmentsService {
     async modifyAssignments(user: Users, modifyDto: ModifyAssignmentDto): Promise<any> {
         const { listAssignment, classId } = modifyDto;
         const aClass = await this.classesService.getAClass(classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString()))
+        if (!aClass.teachers.includes(user._id.toString()))
             throw new UnauthorizedException();
         
         var newAssignmentList = [this.assignmentsRepository.create()];
@@ -150,7 +148,7 @@ export class AssignmentsService {
             throw new NotFoundException();
         }
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new UnauthorizedException();
         }
 
@@ -171,7 +169,7 @@ export class AssignmentsService {
         }
 
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new UnauthorizedException();
         }
 
@@ -197,7 +195,7 @@ export class AssignmentsService {
         }
 
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (user.studentId && aClass.students && !this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString())) {
+        if (user.studentId && aClass.students && !aClass.students.includes(user.studentId.toString())) {
             throw new NotAcceptableException();
         }
 
@@ -213,7 +211,7 @@ export class AssignmentsService {
         }
 
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new UnauthorizedException();
         }
 
@@ -233,7 +231,7 @@ export class AssignmentsService {
 
     async getFullGradeList(user: Users, classId: string) {
         const aClass = await this.classesService.getAClass(classId);
-        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new UnauthorizedException();
         }
         if (aClass.assignments == null) {
@@ -266,7 +264,7 @@ export class AssignmentsService {
 
     async getFullGradeOfStudent(user: Users, classId: string) {
         const aClass = await this.classesService.getAClass(classId);
-        if (user.studentId && aClass.students && !this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString())) {
+        if (user.studentId && aClass.students && !aClass.students.includes(user.studentId.toString())) {
             throw new NotAcceptableException();
         }
         if (aClass.assignments == null) {
