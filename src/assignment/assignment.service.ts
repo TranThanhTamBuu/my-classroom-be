@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotAcceptableException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assignments } from './assignment.entity';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { Classes } from 'src/classes/classes.entity';
+import { SetListGradeDto } from './dto/set-list-grade.dto';
 
 @Injectable()
 export class AssignmentsService {
@@ -141,4 +142,153 @@ export class AssignmentsService {
         this.classesService.saveAClass(aClass);
         return temp;
     }
+
+    async setListGrade(user: Users, setListGradeDto: SetListGradeDto): Promise<Assignments> {
+        const { assignmentId, listGrade, isImport } = setListGradeDto;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+            throw new UnauthorizedException();
+        }
+
+        if (isImport || anAssignment.gradeList === null) {
+            anAssignment.gradeList = {};
+        }
+
+        listGrade.forEach(item => {
+            anAssignment.gradeList[item.studentId] = item.grade;
+        });
+        return this.assignmentsRepository.save(anAssignment);
+    }
+
+    async getListGrade(user: Users, assignmentId: string) {
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+            throw new UnauthorizedException();
+        }
+
+        var res = [];
+        aClass.listStudent.forEach(val => {
+            const grade = anAssignment.gradeList[val.id] ? anAssignment.gradeList[val.id] : null;
+            var newItem = {
+                studentId: val.id,
+                fullName: val.name
+            };
+            newItem[anAssignment.title] = grade;
+            res.push(newItem);
+        })
+        return {
+            data: res
+        };
+    }
+
+    async getStudentGrade(user: Users, assignmentId: string) {
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (user.studentId && aClass.students && !this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString())) {
+            throw new NotAcceptableException();
+        }
+
+        return {
+            grade: anAssignment.gradeList[user.studentId.toString()] ? anAssignment.gradeList[user.studentId.toString()] : null
+        }
+    }
+
+    async getDefaultListGradeJson(user: Users, assignmentId: string) {
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+            throw new UnauthorizedException();
+        }
+
+        var res = [];
+        aClass.listStudent.forEach(val => {
+            var newItem = {
+                studentId: val.id,
+                fullName: val.name
+            };
+            newItem[anAssignment.title] = null;
+            res.push(newItem);
+        })
+        return {
+            data: res
+        };
+    }
+
+    async getFullGradeList(user: Users, classId: string) {
+        const aClass = await this.classesService.getAClass(classId);
+        if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+            throw new UnauthorizedException();
+        }
+        if (aClass.assignments == null) {
+            aClass.assignments = [];
+        }
+        const listAssignments = await this.assignmentsRepository.find({
+            where: {
+                _id: {
+                    $in: aClass.assignments
+                }
+            }
+        });
+        var res = [];
+        aClass.listStudent.forEach(val => {
+            res.push({
+                StudentId: val.id,
+                FullName: val.name,
+            });
+        });
+        listAssignments.forEach(assigment => {
+            const aBool = assigment.gradeList != null;
+            for (let temp of res) {
+                temp[assigment.title] = (aBool && assigment.gradeList[temp.StudentId]) ? assigment.gradeList[temp.StudentId] : null;
+            }
+        });
+        return {
+            data: res
+        };
+    }
+
+    async getFullGradeOfStudent(user: Users, classId: string) {
+        const aClass = await this.classesService.getAClass(classId);
+        if (user.studentId && aClass.students && !this.stringArrUtils.IsInClude(aClass.students, user.studentId.toString())) {
+            throw new NotAcceptableException();
+        }
+        if (aClass.assignments == null) {
+            aClass.assignments = [];
+        }
+        const listAssignments = await this.assignmentsRepository.find({
+            where: {
+                _id: {
+                    $in: aClass.assignments
+                }
+            }
+        });
+        var res = {
+            studentId: user.studentId,
+            FullName: user.name,
+        };
+        listAssignments.forEach(val => {
+            res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
+        })
+        return {
+            date: res,
+        }
+    }
+
 }

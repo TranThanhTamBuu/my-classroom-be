@@ -32,4 +32,7 @@ export class Assignments {
 
     @Column()
     position: number;
+
+    @Column()
+    gradeList: object;
 }
