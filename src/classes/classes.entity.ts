@@ -32,4 +32,12 @@ export class Classes {
 
   @Column()
   gradeList: string;
+
+  @Column()
+  listStudent: [
+    {
+      name: string;
+      id: string;
+    }
+  ];
 }

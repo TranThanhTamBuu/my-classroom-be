@@ -7,6 +7,7 @@ import { Users } from 'src/auth/users.entity';
 import { AuthService } from 'src/auth/auth.service';
 import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 import { SetGradeListDto } from './dto/set-gradeList.dto';
+import { SetListStudentDto } from './dto/set-list-student.dto';
 
 @Injectable()
 export class ClassesService {
@@ -104,6 +105,19 @@ export class ClassesService {
       throw new NotAcceptableException('You are not teacher of this class');
     }
     aClass.gradeList = gradeListJsonString;
+    return this.classesRepository.save(aClass);
+  }
+
+  async setListStudent(user: Users, setListStudent: SetListStudentDto): Promise<Classes> {
+    const { classId, listStudent } = setListStudent;
+    const aClass = await this.classesRepository.findOne(classId);
+    if (aClass == null) {
+      throw new NotFoundException('Class id is not Found');
+    }
+    if (!this.stringArrUtils.IsInClude(aClass.teachers, user._id.toString())) {
+      throw new NotAcceptableException('You are not teacher of this class');
+    }
+    aClass.listStudent = listStudent;
     return this.classesRepository.save(aClass);
   }
 }
