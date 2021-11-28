@@ -4,10 +4,9 @@ import { ClassesController } from './classes.controller';
 import { ClassesService } from './classes.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
-import { StringArraryUtils } from 'src/Utils/StringArrayInclude';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Classes]), AuthModule, StringArraryUtils],
+  imports: [TypeOrmModule.forFeature([Classes]), AuthModule],
   controllers: [ClassesController],
   providers: [ClassesService],
   exports: [ClassesService],
