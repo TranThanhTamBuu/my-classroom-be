@@ -256,7 +256,10 @@ export class AssignmentsService {
         }
         listAssignments.forEach(assigment => {
             const aBool = assigment.gradeList != null;
-            maxPoint[assigment.title] = assigment.totalPoint;
+            maxPoint[assigment.title] = {
+                point: assigment.totalPoint,
+                id: assigment._id
+            }
             for (let temp of res) {
                 temp[assigment.title] = (aBool && assigment.gradeList[temp.StudentId]) ? assigment.gradeList[temp.StudentId] : null;
             }
