@@ -245,6 +245,7 @@ export class AssignmentsService {
             }
         });
         var res = [];
+        var maxPoint = {};
         if (aClass.listStudent) {
             aClass.listStudent.forEach(val => {
                 res.push({
@@ -255,12 +256,14 @@ export class AssignmentsService {
         }
         listAssignments.forEach(assigment => {
             const aBool = assigment.gradeList != null;
+            maxPoint[assigment.title] = assigment.totalPoint;
             for (let temp of res) {
                 temp[assigment.title] = (aBool && assigment.gradeList[temp.StudentId]) ? assigment.gradeList[temp.StudentId] : null;
             }
         });
         return {
-            data: res
+            data: res,
+            maxPoint: maxPoint
         };
     }
 
