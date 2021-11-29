@@ -245,12 +245,14 @@ export class AssignmentsService {
             }
         });
         var res = [];
-        aClass.listStudent.forEach(val => {
-            res.push({
-                StudentId: val.id,
-                FullName: val.name,
+        if (aClass.listStudent) {
+            aClass.listStudent.forEach(val => {
+                res.push({
+                    StudentId: val.id,
+                    FullName: val.name,
+                });
             });
-        });
+        }
         listAssignments.forEach(assigment => {
             const aBool = assigment.gradeList != null;
             for (let temp of res) {
