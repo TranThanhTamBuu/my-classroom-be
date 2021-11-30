@@ -23,8 +23,8 @@ export class AuthController {
   @Get()
   @UseGuards(AuthGuard())
   async getCurrentUser(@Req() req) {
-    const { photo, name, email, studentId } = req.user;
-    return { photo, name, email, studentId };
+    const { _id, photo, name, email, studentId } = req.user;
+    return { _id, photo, name, email, studentId };
   }
 
   @Post('/sign-up')
