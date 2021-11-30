@@ -195,7 +195,7 @@ export class AssignmentsService {
         }
 
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (user.studentId && aClass.students && !aClass.students.includes(user.studentId.toString())) {
+        if (!(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
             throw new NotAcceptableException();
         }
 
@@ -231,8 +231,11 @@ export class AssignmentsService {
 
     async getFullGradeList(user: Users, classId: string) {
         const aClass = await this.classesService.getAClass(classId);
-        if (!aClass.teachers.includes(user._id.toString())) {
-            throw new UnauthorizedException();
+        if (aClass === null) {
+            throw new NotFoundException();
+        }
+        if (!aClass.teachers.includes(user._id.toString()) && !(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+            throw new NotAcceptableException();
         }
         if (aClass.assignments == null) {
             aClass.assignments = [];
@@ -272,7 +275,10 @@ export class AssignmentsService {
 
     async getFullGradeOfStudent(user: Users, classId: string) {
         const aClass = await this.classesService.getAClass(classId);
-        if (user.studentId && aClass.students && !aClass.students.includes(user.studentId.toString())) {
+        if (aClass === null) {
+            throw new NotFoundException();
+        }
+        if (!(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
             throw new NotAcceptableException();
         }
         if (aClass.assignments == null) {
@@ -293,7 +299,7 @@ export class AssignmentsService {
             res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
         })
         return {
-            date: res,
+            data: res,
         }
     }
 
