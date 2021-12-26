@@ -17,6 +17,8 @@ import { JwtAccessToken } from './interfaces/jwt-access-token.interface';
 import { ThirdPartyDto } from './dto/third-party.dto';
 import { ThirdPartyPayload } from './interfaces/third-party-payload.interface';
 import { ChangeProfileDto } from './dto/change-profile.dto';
+import { ToggleActiveDto } from './dto/toggle-active-dto';
+import { ChangeStudentIdDto } from './dto/change-student-id-dto';
 
 @Injectable()
 export class AuthService {
@@ -26,22 +28,25 @@ export class AuthService {
   ) {}
 
   async signUp(signUpDto: SignUpDto): Promise<JwtAccessToken> {
-    const { studentId, email, name, password } = signUpDto;
+    const { studentId, email, name, password, isAdmin } = signUpDto;
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const isStudentExist = (await this.usersRepository.find({ studentId }))
       .length;
-    if (studentId && isStudentExist) {
+    if (studentId && isStudentExist)
       throw new ConflictException('Student ID has already been taken.');
-    }
+
+    if (studentId && isAdmin)
+      throw new ConflictException('Student must not be admin.');
 
     const user = this.usersRepository.create({
       email,
       name,
       password: hashedPassword,
       studentId,
+      isAdmin,
     });
 
     try {
@@ -109,6 +114,39 @@ export class AuthService {
     return this.usersRepository.findOne({ email: email });
   }
 
+  async getAllUsers(): Promise<Users[]> {
+    return this.usersRepository.find();
+  }
+
+  async toggleActiveUser(toggleActiveDto: ToggleActiveDto): Promise<Users> {
+    const { userId, active } = toggleActiveDto;
+    const user = await this.usersRepository.findOne({ _id: userId });
+    user.active = active;
+    return this.usersRepository.save(user);
+  }
+
+  async changeStudentId(
+    changeStudentIdDto: ChangeStudentIdDto,
+  ): Promise<Users> {
+    const { userId, studentId } = changeStudentIdDto;
+
+    const user = await this.usersRepository.findOne({ _id: userId });
+
+    if (!user.studentId)
+      throw new ConflictException(
+        'Can not set student id for teacher or admin',
+      );
+
+    const student = await this.usersRepository.findOne({
+      studentId: studentId,
+    });
+
+    if (student) throw new ConflictException('This Student ID has been used');
+
+    user.studentId = studentId;
+    return this.usersRepository.save(user);
+  }
+
   async getListUser(userIds: string[]): Promise<Users[]> {
     return this.usersRepository.findByIds(userIds);
   }
@@ -116,12 +154,15 @@ export class AuthService {
   async getListUserByStuId(stuId: string[]): Promise<Users[]> {
     return this.usersRepository.find({
       where: {
-        studentId: { $in: stuId } ,
+        studentId: { $in: stuId },
       },
     });
   }
 
-  async changeUserProfile(user: Users, changeProfileDto: ChangeProfileDto): Promise<Users> {
+  async changeUserProfile(
+    user: Users,
+    changeProfileDto: ChangeProfileDto,
+  ): Promise<Users> {
     const { name, studentId } = changeProfileDto;
     var aUser = null;
     if (studentId)
