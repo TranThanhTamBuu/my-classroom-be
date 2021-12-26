@@ -14,7 +14,9 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { JwtAccessToken } from './interfaces/jwt-access-token.interface';
 import 'dotenv/config';
 import { Users } from './users.entity';
-import { ChangeProfileDto} from './dto/change-profile.dto'
+import { ChangeProfileDto } from './dto/change-profile.dto';
+import { ToggleActiveDto } from './dto/toggle-active-dto';
+import { ChangeStudentDto } from './dto/change-student-id-dto';
 
 @Controller('auth')
 export class AuthController {
@@ -61,7 +63,41 @@ export class AuthController {
 
   @Post('/profile')
   @UseGuards(AuthGuard())
-  async changeProfile(@Req() req, @Body() changeProfileDto: ChangeProfileDto): Promise<Users> {
+  async changeProfile(
+    @Req() req,
+    @Body() changeProfileDto: ChangeProfileDto,
+  ): Promise<Users> {
     return this.authService.changeUserProfile(req.user, changeProfileDto);
+  }
+
+  @Get('/users')
+  @UseGuards(AuthGuard())
+  async getUsers(@Req() req, @Res() res): Promise<Users[]> {
+    if (req.user.isAdmin) return this.authService.getAllUsers();
+    else res.redirect('/404');
+  }
+
+  @Post('/toggle-active')
+  @UseGuards(AuthGuard())
+  async toggleActive(
+    @Req() req,
+    @Res() res,
+    @Body() toggleActiveDto: ToggleActiveDto,
+  ): Promise<Users> {
+    if (req.user.isAdmin)
+      return this.authService.toggleActiveUser(toggleActiveDto);
+    else res.redirect('/404');
+  }
+
+  @Post('/change-student-id')
+  @UseGuards(AuthGuard())
+  async changeStudentId(
+    @Req() req,
+    @Res() res,
+    @Body() changeStudentIdDto: ChangeStudentDto,
+  ): Promise<Users> {
+    if (req.user.isAdmin)
+      return this.authService.changeStudentId(changeStudentIdDto);
+    else res.redirect('/404');
   }
 }

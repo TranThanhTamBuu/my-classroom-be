@@ -20,4 +20,10 @@ export class Users {
 
   @Column()
   studentId: string;
+
+  @Column()
+  active: boolean;
+
+  @Column()
+  isAdmin: boolean;
 }
