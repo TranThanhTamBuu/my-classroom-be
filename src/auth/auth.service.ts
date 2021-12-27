@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -27,8 +28,12 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(signUpDto: SignUpDto): Promise<JwtAccessToken> {
+  async signUp(
+    signUpDto: SignUpDto,
+    admin?: boolean,
+  ): Promise<JwtAccessToken | Users> {
     const { studentId, email, name, password, isAdmin } = signUpDto;
+    console.log({ studentId, email, name, password, isAdmin });
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -47,6 +52,7 @@ export class AuthService {
       password: hashedPassword,
       studentId,
       isAdmin,
+      active: true,
     });
 
     try {
@@ -59,6 +65,7 @@ export class AuthService {
       }
     }
 
+    if (admin) return user;
     return await this.getAccessToken(user.email);
   }
 
@@ -73,6 +80,9 @@ export class AuthService {
     const user = await this.usersRepository.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      if (!user.active)
+        throw new UnauthorizedException('This user has been deactivated');
+
       return await this.getAccessToken(user.email);
     } else {
       throw new UnauthorizedException();
@@ -91,6 +101,11 @@ export class AuthService {
         exception: new UnauthorizedException(),
       };
 
+    if (!user.active)
+      return {
+        exception: new UnauthorizedException('This user has been deactivated'),
+      };
+
     await this.usersRepository.update({ email }, { photo });
     const { accessToken } = await this.getAccessToken(user.email);
 
@@ -103,7 +118,9 @@ export class AuthService {
     const { accessToken, exception } = thirdPartyPayload;
     return `${process.env.FE_URL}/oauth?accessToken=${
       accessToken || ''
-    }&statusCode=${exception?.getStatus() || ''}`;
+    }&statusCode=${exception?.getStatus() || ''}&message=${
+      exception?.message || ''
+    }`;
   }
 
   async getUser(userId: string): Promise<Users> {
@@ -118,11 +135,15 @@ export class AuthService {
     return this.usersRepository.find();
   }
 
-  async toggleActiveUser(toggleActiveDto: ToggleActiveDto): Promise<Users> {
-    const { userId, active } = toggleActiveDto;
-    const user = await this.usersRepository.findOne({ _id: userId });
-    user.active = active;
-    return this.usersRepository.save(user);
+  async toggleActiveUser(toggleActiveDto: ToggleActiveDto): Promise<Users[]> {
+    const { userIds, active } = toggleActiveDto;
+    return Promise.all(
+      userIds.map(async (userId) => {
+        const user = await this.usersRepository.findOne({ _id: userId });
+        user.active = active;
+        return this.usersRepository.save(user);
+      }),
+    );
   }
 
   async changeStudentId(
@@ -130,7 +151,9 @@ export class AuthService {
   ): Promise<Users> {
     const { userId, studentId } = changeStudentIdDto;
 
-    const user = await this.usersRepository.findOne({ _id: userId });
+    const user = await this.usersRepository.findOne(userId);
+
+    if (!user) throw new NotFoundException();
 
     if (!user.studentId)
       throw new ConflictException(
@@ -141,7 +164,7 @@ export class AuthService {
       studentId: studentId,
     });
 
-    if (student) throw new ConflictException('This Student ID has been used');
+    if (student) throw new ConflictException('This Student Id has been used');
 
     user.studentId = studentId;
     return this.usersRepository.save(user);

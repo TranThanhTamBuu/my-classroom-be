@@ -1,7 +1,7 @@
 import { IsBoolean } from 'class-validator';
 
 export class ToggleActiveDto {
-  userIds: string[];
+  classIds: string[];
 
   @IsBoolean()
   active: boolean;

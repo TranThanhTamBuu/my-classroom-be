@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Req,
@@ -16,7 +17,7 @@ import 'dotenv/config';
 import { Users } from './users.entity';
 import { ChangeProfileDto } from './dto/change-profile.dto';
 import { ToggleActiveDto } from './dto/toggle-active-dto';
-import { ChangeStudentDto } from './dto/change-student-id-dto';
+import { ChangeStudentIdDto } from './dto/change-student-id-dto';
 
 @Controller('auth')
 export class AuthController {
@@ -25,12 +26,12 @@ export class AuthController {
   @Get()
   @UseGuards(AuthGuard())
   async getCurrentUser(@Req() req) {
-    const { _id, photo, name, email, studentId } = req.user;
-    return { _id, photo, name, email, studentId };
+    const { _id, photo, name, email, studentId, active, isAdmin } = req.user;
+    return { _id, photo, name, email, studentId, active, isAdmin };
   }
 
   @Post('/sign-up')
-  async signUp(@Body() signUpDto: SignUpDto): Promise<JwtAccessToken> {
+  async signUp(@Body() signUpDto: SignUpDto): Promise<JwtAccessToken | Users> {
     return this.authService.signUp(signUpDto);
   }
 
@@ -72,32 +73,40 @@ export class AuthController {
 
   @Get('/users')
   @UseGuards(AuthGuard())
-  async getUsers(@Req() req, @Res() res): Promise<Users[]> {
+  async getUsers(@Req() req): Promise<Users[]> {
     if (req.user.isAdmin) return this.authService.getAllUsers();
-    else res.redirect('/404');
+    else throw new ForbiddenException();
   }
 
   @Post('/toggle-active')
   @UseGuards(AuthGuard())
   async toggleActive(
     @Req() req,
-    @Res() res,
     @Body() toggleActiveDto: ToggleActiveDto,
-  ): Promise<Users> {
+  ): Promise<Users[]> {
     if (req.user.isAdmin)
       return this.authService.toggleActiveUser(toggleActiveDto);
-    else res.redirect('/404');
+    else throw new ForbiddenException();
   }
 
   @Post('/change-student-id')
   @UseGuards(AuthGuard())
   async changeStudentId(
     @Req() req,
-    @Res() res,
-    @Body() changeStudentIdDto: ChangeStudentDto,
+    @Body() changeStudentIdDto: ChangeStudentIdDto,
   ): Promise<Users> {
     if (req.user.isAdmin)
       return this.authService.changeStudentId(changeStudentIdDto);
-    else res.redirect('/404');
+    else throw new ForbiddenException();
+  }
+
+  @Post('/create-admin')
+  @UseGuards(AuthGuard())
+  async createAdmin(
+    @Req() req,
+    @Body() signUpDto: SignUpDto,
+  ): Promise<JwtAccessToken | Users> {
+    if (req.user.isAdmin) return this.authService.signUp(signUpDto, true);
+    else throw new ForbiddenException();
   }
 }
