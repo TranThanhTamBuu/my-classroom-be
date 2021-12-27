@@ -21,9 +21,12 @@ export class Users {
   @Column()
   studentId: string;
 
-  @Column()
+  @Column({ default: true })
   active: boolean;
 
-  @Column()
+  @Column({ default: false })
   isAdmin: boolean;
+
+  @Column({ default: false })
+  activation: boolean;
 }

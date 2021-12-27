@@ -38,9 +38,12 @@ export class Classes {
     {
       name: string;
       id: string;
-    }
+    },
   ];
 
   @Column()
   isFinalized: boolean;
+
+  @Column({ default: true })
+  active: boolean;
 }
