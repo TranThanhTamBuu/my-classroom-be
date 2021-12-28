@@ -4,6 +4,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { SetListGradeDto } from './dto/set-list-grade.dto';
+import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
+import { AddReviewRequestDto } from './dto/add-comment.dto';
+import { TeacherReviewRequest } from './dto/update-grade-review.dto';
 
 @Controller('assignment')
 @UseGuards(AuthGuard())
@@ -50,6 +53,7 @@ export class AssignmentsController {
 
 
     // lấy list điểm của 1 student trong lớp -> trả về {data} : data format như file xlsx khi dùng sheetjs chuyển về json có tất cả các cột điểm
+    // trả về điểm hoặc null: nếu cột điểm của 1 assignment là null thì có thể là thằng đó chưa có điểm hoặc là assignment đó chưa finalized
     @Get('/grade/student/:id')
     async getStudentGradeJson(@Req() req, @Param('id') classId: string) {
         const { user } = req;
@@ -69,4 +73,31 @@ export class AssignmentsController {
         const { user } = req;
         return this.assignmentsService.getFullGradeList(user, ClassId);
     }
+
+    // set lại trạng thái isFinalized của assignment
+    @Put('/finalized')
+    async setFinalized(@Req() req, @Body() input: SetFinalizedDto) {
+        const { user } = req;
+        return this.assignmentsService.setFinalized(user, input);
+    }
+
+    // add review request
+    @Put('/review-request')
+    async addComment(@Req() req, @Body() input: AddReviewRequestDto) {
+        const { user } = req;
+        return this.assignmentsService.studentAddReviewRequest(user, input);
+    }
+
+    @Put('/updateGrade')
+    async updateGradeByReview(@Req() req, @Body() input: TeacherReviewRequest) {
+        const { user } = req;
+        return this.assignmentsService.teacherReviewRequest(user, input);
+    }
+
+    @Get('/listReviewRequest/:id')
+    async listReviewRequest(@Req() req, @Param('id') id: string) {
+        const { user } = req;
+        return this.assignmentsService.getListReviewRequest(user, id);
+    }
+
 }

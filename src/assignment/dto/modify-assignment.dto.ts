@@ -16,6 +16,8 @@ export class ModifyAssignmentDto {
         expiredTime: number;
         
         position: number;
+        
+        isFinalized: boolean;
 
     }];
 

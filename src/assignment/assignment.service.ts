@@ -8,6 +8,9 @@ import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { Classes } from 'src/classes/classes.entity';
 import { SetListGradeDto } from './dto/set-list-grade.dto';
+import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
+import { AddReviewRequestDto } from './dto/add-comment.dto';
+import { TeacherReviewRequest } from './dto/update-grade-review.dto';
 
 @Injectable()
 export class AssignmentsService {
@@ -112,9 +115,14 @@ export class AssignmentsService {
 
                 anAssignment.title = val.title;
                 anAssignment.description = val.description;
+                // Neu thay doi total point thi xoa het diem cu
+                if (anAssignment.totalPoint != val.totalPoint && anAssignment.gradeList) {
+                    anAssignment.gradeList = {};
+                }
                 anAssignment.totalPoint = val.totalPoint;
                 anAssignment.expiredTime = val.expiredTime;
                 anAssignment.position = val.position;
+                anAssignment.isFinalized = val.isFinalized;
                 newAssignmentList.push(anAssignment);
             } else {
                 const newAssignment = this.assignmentsRepository.create({
@@ -127,6 +135,7 @@ export class AssignmentsService {
                     teacherId: user._id,
                     classId,
                     position: val.position,
+                    isFinalized: val.isFinalized,
                 });
                 newAssignmentList.push(newAssignment);
             }
@@ -142,7 +151,7 @@ export class AssignmentsService {
     }
 
     async setListGrade(user: Users, setListGradeDto: SetListGradeDto): Promise<Assignments> {
-        const { assignmentId, listGrade, isImport } = setListGradeDto;
+        const { assignmentId, listGrade, isImport, isFinalized } = setListGradeDto;
         const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
         if (!anAssignment) {
             throw new NotFoundException();
@@ -159,6 +168,21 @@ export class AssignmentsService {
         listGrade.forEach(item => {
             anAssignment.gradeList[item.studentId] = item.grade;
         });
+        anAssignment.isFinalized = isFinalized;
+        return this.assignmentsRepository.save(anAssignment);
+    }
+
+    async setFinalized(user: Users, input: SetFinalizedDto) {
+        const { assignmentId, isFinalized } = input;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!aClass.teachers.includes(user._id.toString())) {
+            throw new UnauthorizedException();
+        }
+        anAssignment.isFinalized = isFinalized;
         return this.assignmentsRepository.save(anAssignment);
     }
 
@@ -234,7 +258,7 @@ export class AssignmentsService {
         if (aClass === null) {
             throw new NotFoundException();
         }
-        if (!aClass.teachers.includes(user._id.toString()) && !(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new NotAcceptableException();
         }
         if (aClass.assignments == null) {
@@ -296,11 +320,98 @@ export class AssignmentsService {
             FullName: user.name,
         };
         listAssignments.forEach(val => {
-            res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
+            if (val.isFinalized)
+                res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
+            else
+                res[val.title] = null;
         })
         return {
             data: res,
         }
+    }
+
+    async studentAddReviewRequest(user: Users, input: AddReviewRequestDto) {
+        const { assignmentId, studentComment, expectedGrade } = input;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+            throw new NotAcceptableException();
+        }
+        if (anAssignment.reviewRequestList[user.studentId.toString()] && anAssignment.reviewRequestList[user.studentId.toString()].isFinal) {
+            throw new NotAcceptableException();
+        }
+        const temp = {
+            studentComment: studentComment,
+            currentGrade: anAssignment.gradeList[user.studentId.toString()],
+            expectedGrade: expectedGrade,
+            studentId: user.studentId.toString(),
+            isFinal: false,
+            newGrade: undefined,
+            teacherComment: undefined,
+        };
+        anAssignment.reviewRequestList[user.studentId.toString()] = temp;
+        await this.assignmentsRepository.save(anAssignment);
+        return temp;
+    }
+
+    async teacherReviewRequest(user: Users, input: TeacherReviewRequest) {
+        const { studentId, assignmentId, newGrade, comment, markAsFinal } = input;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!aClass.teachers.includes(user._id.toString())) {
+            throw new NotAcceptableException();
+        }
+        if (!anAssignment.reviewRequestList[studentId]) {
+            throw new NotFoundException();
+        }
+        if (newGrade) {
+            anAssignment.reviewRequestList[studentId].newGrade = newGrade;
+        }
+        if (comment) {
+            anAssignment.reviewRequestList[studentId].teacherComment = comment;
+        }
+        if (markAsFinal) {
+            anAssignment.reviewRequestList[studentId].isFinal = true;
+            aClass.gradeList[studentId] = anAssignment.reviewRequestList[studentId].newGrade ? anAssignment.reviewRequestList[studentId].newGrade : anAssignment.reviewRequestList[studentId].currentGrade;
+        }
+        await this.assignmentsRepository.save(anAssignment);
+        return true;
+    }
+
+    async getListReviewRequest(user: Users, assignmentId: string) {
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!user.studentId) {
+            if (!aClass.teachers.includes(user._id.toString())) {
+                throw new NotAcceptableException();
+            }
+            return {
+                data: anAssignment.reviewRequestList
+            }
+        } else {
+            if (!(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+                throw new NotAcceptableException();
+            }
+            if (anAssignment.reviewRequestList[user.studentId.toString()]) {
+                return {
+                    data: anAssignment.reviewRequestList[user.studentId.toString()]
+                }
+            } else {
+                return {
+                    data: {}
+                }
+            }
+        }
+        
     }
 
 }
