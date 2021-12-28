@@ -9,10 +9,10 @@ export class TeacherReviewRequest {
     assignmentId: string;
 
     @IsOptional()
-    newGrade: string;
+    newGrade: number;
 
     @IsOptional()
-    comment: number;
+    comment: string;
 
     @IsOptional()
     markAsFinal: boolean;
