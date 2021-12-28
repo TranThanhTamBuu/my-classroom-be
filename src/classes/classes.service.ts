@@ -47,7 +47,8 @@ export class ClassesService {
       subject,
       createdBy: creator._id,
       teachers: [creator._id.toString()],
-      students:[],
+      students: [],
+      isFinalized: false,
     });
 
     return this.classesRepository.save(newClass);
@@ -117,5 +118,18 @@ export class ClassesService {
     }
     aClass.listStudent = listStudent;
     return this.classesRepository.save(aClass);
+  }
+
+  async setFinalized(user: Users, isFinalized: boolean, classId: string) {
+    const aClass = await this.classesRepository.findOne(classId);
+    if (aClass === null) {
+      throw new NotFoundException('Class id is not Found');
+    }
+    if (!aClass.teachers.includes(user._id.toString())) {
+      throw new NotAcceptableException('You are not teacher of this class');
+    }
+    aClass.isFinalized = isFinalized;
+    await this.classesRepository.save(aClass);
+    return true;
   }
 }
