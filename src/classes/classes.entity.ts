@@ -40,4 +40,7 @@ export class Classes {
       id: string;
     }
   ];
+
+  @Column()
+  isFinalized: boolean;
 }

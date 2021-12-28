@@ -8,7 +8,6 @@ import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { Classes } from 'src/classes/classes.entity';
 import { SetListGradeDto } from './dto/set-list-grade.dto';
-import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
 import { AddReviewRequestDto } from './dto/add-comment.dto';
 import { TeacherReviewRequest } from './dto/update-grade-review.dto';
 import { StudentUpdateReviewRequestDto } from './dto/student-update-review.dto';
@@ -123,7 +122,6 @@ export class AssignmentsService {
                 anAssignment.totalPoint = val.totalPoint;
                 anAssignment.expiredTime = val.expiredTime;
                 anAssignment.position = val.position;
-                anAssignment.isFinalized = val.isFinalized;
                 newAssignmentList.push(anAssignment);
             } else {
                 const newAssignment = this.assignmentsRepository.create({
@@ -136,7 +134,6 @@ export class AssignmentsService {
                     teacherId: user._id,
                     classId,
                     position: val.position,
-                    isFinalized: val.isFinalized,
                 });
                 newAssignmentList.push(newAssignment);
             }
@@ -152,7 +149,7 @@ export class AssignmentsService {
     }
 
     async setListGrade(user: Users, setListGradeDto: SetListGradeDto): Promise<Assignments> {
-        const { assignmentId, listGrade, isImport, isFinalized } = setListGradeDto;
+        const { assignmentId, listGrade, isImport } = setListGradeDto;
         const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
         if (!anAssignment) {
             throw new NotFoundException();
@@ -169,21 +166,6 @@ export class AssignmentsService {
         listGrade.forEach(item => {
             anAssignment.gradeList[item.studentId] = item.grade;
         });
-        anAssignment.isFinalized = isFinalized;
-        return this.assignmentsRepository.save(anAssignment);
-    }
-
-    async setFinalized(user: Users, input: SetFinalizedDto) {
-        const { assignmentId, isFinalized } = input;
-        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
-        if (!anAssignment) {
-            throw new NotFoundException();
-        }
-        const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (!aClass.teachers.includes(user._id.toString())) {
-            throw new UnauthorizedException();
-        }
-        anAssignment.isFinalized = isFinalized;
         return this.assignmentsRepository.save(anAssignment);
     }
 
@@ -225,7 +207,7 @@ export class AssignmentsService {
         }
 
         return {
-            grade: anAssignment.gradeList[user.studentId.toString()] ? anAssignment.gradeList[user.studentId.toString()] : null
+            grade: (anAssignment.gradeList[user.studentId.toString()] && aClass.isFinalized) ? anAssignment.gradeList[user.studentId.toString()] : null
         }
     }
 
@@ -324,7 +306,7 @@ export class AssignmentsService {
         var assigmentIndex = {};
         listAssignments.forEach(val => {
             assigmentIndex[val.title] = val.position;
-            if (val.isFinalized)
+            if (aClass.isFinalized)
                 res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
             else
                 res[val.title] = null;
