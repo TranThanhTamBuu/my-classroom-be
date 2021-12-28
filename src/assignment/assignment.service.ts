@@ -11,6 +11,7 @@ import { SetListGradeDto } from './dto/set-list-grade.dto';
 import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
 import { AddReviewRequestDto } from './dto/add-comment.dto';
 import { TeacherReviewRequest } from './dto/update-grade-review.dto';
+import { StudentUpdateReviewRequestDto } from './dto/student-update-review.dto';
 
 @Injectable()
 export class AssignmentsService {
@@ -347,14 +348,20 @@ export class AssignmentsService {
         if (anAssignment.reviewRequestList[user.studentId.toString()] && anAssignment.reviewRequestList[user.studentId.toString()].isFinal) {
             throw new NotAcceptableException();
         }
+        const acommnet = {
+            comment: studentComment,
+            time: Math.floor(Date.now() / 1000),
+        }
+        const commentList: any = [];
+        commentList.push(acommnet);
         const temp = {
-            studentComment: studentComment,
+            studentComment: commentList,
             currentGrade: anAssignment.gradeList[user.studentId.toString()],
             expectedGrade: expectedGrade,
             studentId: user.studentId.toString(),
             isFinal: false,
             newGrade: undefined,
-            teacherComment: undefined,
+            teacherComment: [],
         };
         anAssignment.reviewRequestList[user.studentId.toString()] = temp;
         await this.assignmentsRepository.save(anAssignment);
@@ -378,7 +385,11 @@ export class AssignmentsService {
             anAssignment.reviewRequestList[studentId].newGrade = newGrade;
         }
         if (comment) {
-            anAssignment.reviewRequestList[studentId].teacherComment = comment;
+            const acommnet = {
+                comment: comment,
+                time: Math.floor(Date.now() / 1000),
+            }
+            anAssignment.reviewRequestList[studentId].teacherComment.push(acommnet);
         }
         if (markAsFinal) {
             anAssignment.reviewRequestList[studentId].isFinal = true;
@@ -414,8 +425,34 @@ export class AssignmentsService {
                     data: {}
                 }
             }
+        } 
+    }
+
+    async studentUpdateReview(user: Users, input: StudentUpdateReviewRequestDto) {
+        const { assignmentId, studentComment, expectedGrade } = input;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
         }
-        
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+            throw new NotAcceptableException();
+        }
+        if (!anAssignment.reviewRequestList[user.studentId.toString()]) {
+            throw new NotFoundException();
+        }
+        if (studentComment) {
+            const acommnet = {
+                comment: studentComment,
+                time: Math.floor(Date.now() / 1000),
+            }
+            anAssignment.reviewRequestList[user.studentId.toString()].studentComment.push(acommnet);
+        }
+        if (expectedGrade) {
+            anAssignment.reviewRequestList[user.studentId.toString()].expectedGrade = expectedGrade;
+        }
+        await this.assignmentsRepository.save(anAssignment);
+        return true;
     }
 
 }

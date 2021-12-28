@@ -7,6 +7,7 @@ import { SetListGradeDto } from './dto/set-list-grade.dto';
 import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
 import { AddReviewRequestDto } from './dto/add-comment.dto';
 import { TeacherReviewRequest } from './dto/update-grade-review.dto';
+import { StudentUpdateReviewRequestDto } from './dto/student-update-review.dto';
 
 @Controller('assignment')
 @UseGuards(AuthGuard())
@@ -100,4 +101,9 @@ export class AssignmentsController {
         return this.assignmentsService.getListReviewRequest(user, id);
     }
 
+    @Put('/updateReview')
+    async updateReview(@Req() req, @Body() input: StudentUpdateReviewRequestDto) {
+        const { user } = req;
+        return this.assignmentsService.studentUpdateReview(user, input);
+    }
 }
