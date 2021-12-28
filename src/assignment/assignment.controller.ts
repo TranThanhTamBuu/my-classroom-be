@@ -4,6 +4,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { SetListGradeDto } from './dto/set-list-grade.dto';
+import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
+import { AddCommentDto } from './dto/add-comment.dto';
 
 @Controller('assignment')
 @UseGuards(AuthGuard())
@@ -50,6 +52,7 @@ export class AssignmentsController {
 
 
     // lấy list điểm của 1 student trong lớp -> trả về {data} : data format như file xlsx khi dùng sheetjs chuyển về json có tất cả các cột điểm
+    // trả về điểm hoặc null: nếu cột điểm của 1 assignment là null thì có thể là thằng đó chưa có điểm hoặc là assignment đó chưa finalized
     @Get('/grade/student/:id')
     async getStudentGradeJson(@Req() req, @Param('id') classId: string) {
         const { user } = req;
@@ -68,5 +71,19 @@ export class AssignmentsController {
     async getClassFullGradeJson(@Req() req, @Param('id') ClassId: string) {
         const { user } = req;
         return this.assignmentsService.getFullGradeList(user, ClassId);
+    }
+
+    // set lại trạng thái isFinalized của assignment
+    @Put('/finalized')
+    async setFinalized(@Req() req, @Body() input: SetFinalizedDto) {
+        const { user } = req;
+        return this.assignmentsService.setFinalized(user, input);
+    }
+
+    // set coment
+    @Put('/comment')
+    async addComment(@Req() req, @Body() input: AddCommentDto) {
+        const { user } = req;
+        return this.assignmentsService.studentAddComment(user, input);
     }
 }

@@ -8,6 +8,8 @@ import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { ModifyAssignmentDto } from './dto/modify-assignment.dto';
 import { Classes } from 'src/classes/classes.entity';
 import { SetListGradeDto } from './dto/set-list-grade.dto';
+import { SetFinalizedDto } from './dto/set-finalized-assignment.dto';
+import { AddCommentDto } from './dto/add-comment.dto';
 
 @Injectable()
 export class AssignmentsService {
@@ -112,9 +114,14 @@ export class AssignmentsService {
 
                 anAssignment.title = val.title;
                 anAssignment.description = val.description;
+                // Neu thay doi total point thi xoa het diem cu
+                if (anAssignment.totalPoint != val.totalPoint && anAssignment.gradeList) {
+                    anAssignment.gradeList = {};
+                }
                 anAssignment.totalPoint = val.totalPoint;
                 anAssignment.expiredTime = val.expiredTime;
                 anAssignment.position = val.position;
+                anAssignment.isFinalized = val.isFinalized;
                 newAssignmentList.push(anAssignment);
             } else {
                 const newAssignment = this.assignmentsRepository.create({
@@ -127,6 +134,7 @@ export class AssignmentsService {
                     teacherId: user._id,
                     classId,
                     position: val.position,
+                    isFinalized: val.isFinalized,
                 });
                 newAssignmentList.push(newAssignment);
             }
@@ -142,7 +150,7 @@ export class AssignmentsService {
     }
 
     async setListGrade(user: Users, setListGradeDto: SetListGradeDto): Promise<Assignments> {
-        const { assignmentId, listGrade, isImport } = setListGradeDto;
+        const { assignmentId, listGrade, isImport, isFinalized } = setListGradeDto;
         const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
         if (!anAssignment) {
             throw new NotFoundException();
@@ -159,6 +167,21 @@ export class AssignmentsService {
         listGrade.forEach(item => {
             anAssignment.gradeList[item.studentId] = item.grade;
         });
+        anAssignment.isFinalized = isFinalized;
+        return this.assignmentsRepository.save(anAssignment);
+    }
+
+    async setFinalized(user: Users, input: SetFinalizedDto) {
+        const { assignmentId, isFinalized } = input;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!aClass.teachers.includes(user._id.toString())) {
+            throw new UnauthorizedException();
+        }
+        anAssignment.isFinalized = isFinalized;
         return this.assignmentsRepository.save(anAssignment);
     }
 
@@ -176,11 +199,13 @@ export class AssignmentsService {
         var res = [];
         aClass.listStudent.forEach(val => {
             const grade = anAssignment.gradeList[val.id] ? anAssignment.gradeList[val.id] : null;
+            const cmt = anAssignment.commentList[val.id] ? anAssignment.commentList[val.id] : null;
             var newItem = {
                 studentId: val.id,
                 fullName: val.name
             };
             newItem[anAssignment.title] = grade;
+            newItem[anAssignment.title + '_cmt'] = cmt;
             res.push(newItem);
         })
         return {
@@ -234,7 +259,7 @@ export class AssignmentsService {
         if (aClass === null) {
             throw new NotFoundException();
         }
-        if (!aClass.teachers.includes(user._id.toString()) && !(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+        if (!aClass.teachers.includes(user._id.toString())) {
             throw new NotAcceptableException();
         }
         if (aClass.assignments == null) {
@@ -265,6 +290,7 @@ export class AssignmentsService {
             }
             for (let temp of res) {
                 temp[assigment.title] = (aBool && assigment.gradeList[temp.StudentId]) ? assigment.gradeList[temp.StudentId] : null;
+                temp[assigment.title + '_cmt'] = (aBool && assigment.commentList[temp.StudentId]) ? assigment.commentList[temp.StudentId] : null;
             }
         });
         return {
@@ -296,11 +322,32 @@ export class AssignmentsService {
             FullName: user.name,
         };
         listAssignments.forEach(val => {
-            res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
+            if (val.isFinalized)
+                res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
+            else
+                res[val.title] = null;
+            
+            res[val.title + '_cmt'] = val.commentList[res.studentId] ? val.commentList[res.studentId] : null;
         })
         return {
             data: res,
         }
+    }
+
+    async studentAddComment(user: Users, input: AddCommentDto) {
+        const { assignmentId, comment } = input;
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!(aClass.students && user.studentId && aClass.students.includes(user.studentId.toString()))) {
+            throw new NotAcceptableException();
+        }
+        anAssignment.commentList[user.studentId.toString()] = comment;
+        await this.assignmentsRepository.save(anAssignment);
+        return true;
     }
 
 }

@@ -35,4 +35,10 @@ export class Assignments {
 
     @Column()
     gradeList: object;
+
+    @Column()
+    commentList: object;
+
+    @Column()
+    isFinalized: boolean;
 }
