@@ -240,11 +240,10 @@ export class AssignmentsService {
         }
 
         var res = [];
-        aClass.listStudent.forEach((val,index) => {
+        aClass.listStudent.forEach(val => {
             var newItem = {
                 studentId: val.id,
                 fullName: val.name,
-                index: index + 1,
             };
             newItem[anAssignment.title] = null;
             res.push(newItem);
@@ -275,11 +274,10 @@ export class AssignmentsService {
         var res = [];
         var maxPoint = {};
         if (aClass.listStudent) {
-            aClass.listStudent.forEach((val,index) => {
+            aClass.listStudent.forEach(val => {
                 res.push({
                     StudentId: val.id,
                     FullName: val.name,
-                    index: index + 1,
                 });
             });
         }
@@ -287,7 +285,8 @@ export class AssignmentsService {
             const aBool = assigment.gradeList != null;
             maxPoint[assigment.title] = {
                 point: assigment.totalPoint,
-                id: assigment._id
+                id: assigment._id,
+                index: assigment.position,
             }
             for (let temp of res) {
                 temp[assigment.title] = (aBool && assigment.gradeList[temp.StudentId]) ? assigment.gradeList[temp.StudentId] : null;
@@ -321,7 +320,9 @@ export class AssignmentsService {
             studentId: user.studentId,
             FullName: user.name,
         };
+        var assigmentIndex = {};
         listAssignments.forEach(val => {
+            assigmentIndex[val.title] = val.position;
             if (val.isFinalized)
                 res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
             else
@@ -329,6 +330,7 @@ export class AssignmentsService {
         })
         return {
             data: res,
+            assignmentIndex: assigmentIndex
         }
     }
 
