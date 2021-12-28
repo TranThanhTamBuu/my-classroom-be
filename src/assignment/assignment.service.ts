@@ -240,10 +240,11 @@ export class AssignmentsService {
         }
 
         var res = [];
-        aClass.listStudent.forEach(val => {
+        aClass.listStudent.forEach((val,index) => {
             var newItem = {
                 studentId: val.id,
-                fullName: val.name
+                fullName: val.name,
+                index: index + 1,
             };
             newItem[anAssignment.title] = null;
             res.push(newItem);
@@ -274,10 +275,11 @@ export class AssignmentsService {
         var res = [];
         var maxPoint = {};
         if (aClass.listStudent) {
-            aClass.listStudent.forEach(val => {
+            aClass.listStudent.forEach((val,index) => {
                 res.push({
                     StudentId: val.id,
                     FullName: val.name,
+                    index: index + 1,
                 });
             });
         }
