@@ -80,6 +80,7 @@ export class ClassesService {
       students: listStudent,
       teachers: listTeacher,
       gradeList: aClass.gradeList,
+      isFinalized: aClass.isFinalized,
     });
   }
 
