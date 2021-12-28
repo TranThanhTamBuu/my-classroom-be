@@ -75,13 +75,6 @@ export class AssignmentsController {
         return this.assignmentsService.getFullGradeList(user, ClassId);
     }
 
-    // set lại trạng thái isFinalized của assignment
-    @Put('/finalized')
-    async setFinalized(@Req() req, @Body() input: SetFinalizedDto) {
-        const { user } = req;
-        return this.assignmentsService.setFinalized(user, input);
-    }
-
     // add review request
     @Put('/review-request')
     async addComment(@Req() req, @Body() input: AddReviewRequestDto) {
