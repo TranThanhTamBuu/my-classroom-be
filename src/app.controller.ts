@@ -10,8 +10,8 @@ export class AppController {
   ) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  migrate() {
+    return this.appService.migrate();
   }
 
   @Get('test-mail')

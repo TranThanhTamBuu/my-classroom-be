@@ -22,6 +22,7 @@ import { Assignments } from './assignment/assignment.entity';
       useUnifiedTopology: true,
       entities: [Classes, Users, Link, Assignments],
     }),
+    TypeOrmModule.forFeature([Classes, Users]),
     ClassesModule,
     AuthModule,
     LinkModule,
