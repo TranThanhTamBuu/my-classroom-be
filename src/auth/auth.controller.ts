@@ -3,6 +3,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Param,
   Post,
   Req,
   Res,
@@ -71,10 +72,10 @@ export class AuthController {
     return this.authService.changeUserProfile(req.user, changeProfileDto);
   }
 
-  @Get('/users')
+  @Get('/users/:type')
   @UseGuards(AuthGuard())
-  async getUsers(@Req() req): Promise<Users[]> {
-    if (req.user.isAdmin) return this.authService.getAllUsers();
+  async getUsers(@Req() req, @Param('type') type: string): Promise<Users[]> {
+    if (req.user.isAdmin) return this.authService.getAllUsers(type === 'admin');
     else throw new ForbiddenException();
   }
 

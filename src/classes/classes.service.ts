@@ -18,11 +18,17 @@ import { ToggleActiveDto } from './dto/toggle-active-dto';
 export class ClassesService {
   constructor(
     @InjectRepository(Classes) private classesRepository: Repository<Classes>,
+    @InjectRepository(Users) private usersRepository: Repository<Users>,
     private authService: AuthService,
   ) {}
 
-  async getAllClasses(): Promise<Classes[]> {
-    return this.classesRepository.find();
+  async getAllClasses(): Promise<Array<any>> {
+    return Promise.all(
+      (await this.classesRepository.find()).map(async (aClass) => ({
+        ...aClass,
+        createdBy: (await this.usersRepository.findOne(aClass.createdBy))?.name,
+      })),
+    );
   }
 
   async getTeacherClasses(teacher: Users): Promise<Classes[]> {
@@ -166,7 +172,7 @@ export class ClassesService {
     const { classIds, active } = toggleActiveDto;
     return Promise.all(
       classIds.map(async (classId) => {
-        const aClass = await this.classesRepository.findOne({ _id: classId });
+        const aClass = await this.classesRepository.findOne(classId);
         aClass.active = active;
         return this.classesRepository.save(aClass);
       }),

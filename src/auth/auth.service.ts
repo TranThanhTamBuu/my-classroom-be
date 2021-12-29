@@ -131,15 +131,19 @@ export class AuthService {
     return this.usersRepository.findOne({ email: email });
   }
 
-  async getAllUsers(): Promise<Users[]> {
-    return this.usersRepository.find();
+  async getAllUsers(isAdmin: boolean): Promise<Users[]> {
+    return this.usersRepository.find({
+      where: {
+        isAdmin,
+      },
+    });
   }
 
   async toggleActiveUser(toggleActiveDto: ToggleActiveDto): Promise<Users[]> {
     const { userIds, active } = toggleActiveDto;
     return Promise.all(
       userIds.map(async (userId) => {
-        const user = await this.usersRepository.findOne({ _id: userId });
+        const user = await this.usersRepository.findOne(userId);
         user.active = active;
         return this.usersRepository.save(user);
       }),

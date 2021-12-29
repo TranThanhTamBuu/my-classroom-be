@@ -29,4 +29,7 @@ export class Users {
 
   @Column({ default: false })
   activation: boolean;
+
+  @Column({ default: new Date() })
+  createdAt: Date;
 }
