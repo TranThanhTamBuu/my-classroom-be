@@ -38,4 +38,7 @@ export class Assignments {
 
     @Column()
     reviewRequestList: object;
+
+    @Column()
+    isFinalized: boolean;
 }

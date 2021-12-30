@@ -41,9 +41,6 @@ export class Classes {
     },
   ];
 
-  @Column()
-  isFinalized: boolean;
-
   @Column({ default: true })
   active: boolean;
 

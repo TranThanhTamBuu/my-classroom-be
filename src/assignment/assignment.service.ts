@@ -57,6 +57,7 @@ export class AssignmentsService {
                 teacherId: user._id,
                 classId,
                 position: val.position,
+                isFinalized: val.isFinalized,
             });
             assignments.push(newAssignment);
         });
@@ -122,6 +123,7 @@ export class AssignmentsService {
                 anAssignment.totalPoint = val.totalPoint;
                 anAssignment.expiredTime = val.expiredTime;
                 anAssignment.position = val.position;
+                anAssignment.isFinalized = val.isFinalized;
                 newAssignmentList.push(anAssignment);
             } else {
                 const newAssignment = this.assignmentsRepository.create({
@@ -134,6 +136,7 @@ export class AssignmentsService {
                     teacherId: user._id,
                     classId,
                     position: val.position,
+                    isFinalized: val.isFinalized,
                 });
                 newAssignmentList.push(newAssignment);
             }
@@ -149,7 +152,7 @@ export class AssignmentsService {
     }
 
     async setListGrade(user: Users, setListGradeDto: SetListGradeDto): Promise<Assignments> {
-        const { assignmentId, listGrade, isImport } = setListGradeDto;
+        const { assignmentId, listGrade, isImport, isFinalized } = setListGradeDto;
         const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
         if (!anAssignment) {
             throw new NotFoundException();
@@ -166,6 +169,7 @@ export class AssignmentsService {
         listGrade.forEach(item => {
             anAssignment.gradeList[item.studentId] = item.grade;
         });
+        anAssignment.isFinalized = isFinalized;
         return this.assignmentsRepository.save(anAssignment);
     }
 
@@ -207,7 +211,7 @@ export class AssignmentsService {
         }
 
         return {
-            grade: (anAssignment.gradeList[user.studentId.toString()] && aClass.isFinalized) ? anAssignment.gradeList[user.studentId.toString()] : null
+            grade: (anAssignment.gradeList[user.studentId.toString()] && anAssignment.isFinalized) ? anAssignment.gradeList[user.studentId.toString()] : null
         }
     }
 
@@ -270,6 +274,7 @@ export class AssignmentsService {
                 point: assigment.totalPoint,
                 id: assigment._id,
                 index: assigment.position,
+                isFinalized: assigment.isFinalized,
             }
             for (let temp of res) {
                 temp[assigment.title] = (aBool && assigment.gradeList[temp.StudentId]) ? assigment.gradeList[temp.StudentId] : null;
@@ -306,10 +311,17 @@ export class AssignmentsService {
         var assigmentIndex = {};
         listAssignments.forEach(val => {
             assigmentIndex[val.title] = val.position;
-            if (aClass.isFinalized)
-                res[val.title] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
+            var temp = {
+                name: val.title,
+                isFinalized: val.isFinalized,
+                maxPoint: val.totalPoint,
+                isReviewRequest : val.reviewRequestList[user.studentId] ? true : false,
+            };
+            if (val.isFinalized)
+                temp['studentPoint'] = val.gradeList[res.studentId] ? val.gradeList[res.studentId] : null;
             else
-                res[val.title] = null;
+                temp['studentPoint'] = null;
+            res[val.title] = temp;
         })
         return {
             data: res,
@@ -433,6 +445,20 @@ export class AssignmentsService {
         if (expectedGrade) {
             anAssignment.reviewRequestList[user.studentId.toString()].expectedGrade = expectedGrade;
         }
+        await this.assignmentsRepository.save(anAssignment);
+        return true;
+    }
+
+    async setFinalized(user: Users, assignmentId: string, isFinalized: boolean) {
+        const anAssignment = await this.assignmentsRepository.findOne(assignmentId);
+        if (!anAssignment) {
+            throw new NotFoundException();
+        }
+        const aClass = await this.classesService.getAClass(anAssignment.classId);
+        if (!aClass.teachers.includes(user._id.toString())) {
+            throw new NotAcceptableException();
+        }
+        anAssignment.isFinalized = isFinalized;
         await this.assignmentsRepository.save(anAssignment);
         return true;
     }

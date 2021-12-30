@@ -61,18 +61,6 @@ export class ClassesController {
     return this.classesService.setListStudent(user, setListStudentDto);
   }
 
-  @Put('/markFinalized/:id')
-  async setClassFinalized(@Req() req, @Param('id') id: string) {
-    const { user } = req;
-    return this.classesService.setFinalized(user, true, id);
-  }
-
-  @Put('/markUnfinalized/:id')
-  async setClassUnfinalized(@Req() req, @Param('id') id: string) {
-    const { user } = req;
-    return this.classesService.setFinalized(user, false, id);
-  }
-
   @Post('/toggle-active')
   @UseGuards(AuthGuard())
   async toggleActive(

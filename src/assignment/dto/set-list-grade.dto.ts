@@ -14,4 +14,7 @@ export class SetListGradeDto {
 
     @IsNotEmptyObject()
     isImport: boolean;
+
+    @IsNotEmptyObject()
+    isFinalized: boolean;
 }

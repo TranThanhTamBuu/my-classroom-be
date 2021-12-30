@@ -99,4 +99,16 @@ export class AssignmentsController {
         const { user } = req;
         return this.assignmentsService.studentUpdateReview(user, input);
     }
+
+    @Put('/markFinalized/:id')
+    async markFinalied(@Req() req, @Param('id') id: string) {
+        const { user } = req;
+        return this.assignmentsService.setFinalized(user, id, true);
+    }
+
+    @Put('/markUnfinalized/:id')
+    async markunFinalied(@Req() req, @Param('id') id: string) {
+        const { user } = req;
+        return this.assignmentsService.setFinalized(user, id, false);
+    }
 }
