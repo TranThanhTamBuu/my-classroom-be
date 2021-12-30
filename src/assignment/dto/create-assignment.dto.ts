@@ -13,6 +13,8 @@ export class CreateAssignmentDto {
         expiredTime: number;
         
         position: number;
+        
+        isFinalized: boolean;
 
     }];
 
