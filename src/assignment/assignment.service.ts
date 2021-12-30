@@ -312,6 +312,7 @@ export class AssignmentsService {
         listAssignments.forEach(val => {
             assigmentIndex[val.title] = val.position;
             var temp = {
+                id: val._id,
                 name: val.title,
                 isFinalized: val.isFinalized,
                 maxPoint: val.totalPoint,
