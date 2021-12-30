@@ -64,8 +64,9 @@ export class ClassesService {
       room,
       subject,
       createdBy: creator._id,
+      createdAt: new Date(),
       teachers: [creator._id.toString()],
-      students: []
+      students: [],
     });
 
     return this.classesRepository.save(newClass);
@@ -101,7 +102,7 @@ export class ClassesService {
       createdBy: aClass.createdBy,
       students: listStudent,
       teachers: listTeacher,
-      gradeList: aClass.gradeList
+      gradeList: aClass.gradeList,
     });
   }
 

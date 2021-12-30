@@ -20,12 +20,14 @@ import { ThirdPartyPayload } from './interfaces/third-party-payload.interface';
 import { ChangeProfileDto } from './dto/change-profile.dto';
 import { ToggleActiveDto } from './dto/toggle-active-dto';
 import { ChangeStudentIdDto } from './dto/change-student-id-dto';
+import MailService from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Users) private usersRepository: Repository<Users>,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async signUp(
@@ -33,7 +35,6 @@ export class AuthService {
     admin?: boolean,
   ): Promise<JwtAccessToken | Users> {
     const { studentId, email, name, password, isAdmin } = signUpDto;
-    console.log({ studentId, email, name, password, isAdmin });
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -53,6 +54,7 @@ export class AuthService {
       studentId,
       isAdmin,
       active: true,
+      createdAt: new Date(),
     });
 
     try {
@@ -64,6 +66,12 @@ export class AuthService {
         throw new InternalServerErrorException();
       }
     }
+
+    this.mailService.sendMailActivation(
+      email,
+      name,
+      (await this.getAccessToken(user.email)).accessToken,
+    );
 
     if (admin) return user;
     return await this.getAccessToken(user.email);
@@ -83,10 +91,17 @@ export class AuthService {
       if (!user.active)
         throw new UnauthorizedException('This user has been deactivated');
 
+      if (!user.activation) throw new UnauthorizedException('Unactivation');
+
       return await this.getAccessToken(user.email);
     } else {
       throw new UnauthorizedException();
     }
+  }
+
+  async activate(token: string): Promise<void> {
+    const { email } = await this.jwtService.verify(token);
+    await this.usersRepository.update({ email }, { activation: true });
   }
 
   async verifyThirdPartyAuthentication(
@@ -104,6 +119,11 @@ export class AuthService {
     if (!user.active)
       return {
         exception: new UnauthorizedException('This user has been deactivated'),
+      };
+
+    if (!user.activation)
+      return {
+        exception: new UnauthorizedException('Unactivation'),
       };
 
     await this.usersRepository.update({ email }, { photo });

@@ -41,6 +41,17 @@ export class AuthController {
     return this.authService.signIn(signInDto);
   }
 
+  @Get('/activation/:token')
+  async activate(@Res() res, @Param('token') token: string) {
+    try {
+      await this.authService.activate(token);
+      res.redirect(process.env.FE_URL + '/?tab=sign-in&activation=1');
+    } catch (error) {
+      console.log(error);
+      res.redirect(process.env.FE_URL + '/404');
+    }
+  }
+
   @Get('/google')
   @UseGuards(AuthGuard('google'))
   // eslint-disable-next-line @typescript-eslint/no-empty-function
