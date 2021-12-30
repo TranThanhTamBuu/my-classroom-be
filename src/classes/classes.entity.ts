@@ -38,6 +38,12 @@ export class Classes {
     {
       name: string;
       id: string;
-    }
+    },
   ];
+
+  @Column({ default: true })
+  active: boolean;
+
+  @Column({ default: new Date() })
+  createdAt: Date;
 }

@@ -1,9 +1,23 @@
 import { CreateClassDto } from './dto/create-class.dto';
-import { Controller, Post, Get, Body, UseGuards, Req, NotAcceptableException, Param, Put } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Req,
+  NotAcceptableException,
+  Param,
+  Put,
+  Res,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { AuthGuard } from '@nestjs/passport';
 import { SetGradeListDto } from './dto/set-gradeList.dto';
-import { SetListStudentDto} from './dto/set-list-student.dto'
+import { SetListStudentDto } from './dto/set-list-student.dto';
+import { Classes } from './classes.entity';
+import { ToggleActiveDto } from './dto/toggle-active-dto';
 
 @Controller('classes')
 @UseGuards(AuthGuard())
@@ -20,8 +34,17 @@ export class ClassesController {
   @Post()
   async createClass(@Req() req, @Body() createClassDto: CreateClassDto) {
     const { user } = req;
-    if (user.studentId) throw new NotAcceptableException('Student is not allowed to create class');
+    if (user.studentId)
+      throw new NotAcceptableException(
+        'Student is not allowed to create class',
+      );
     return await this.classesService.createClass(createClassDto, user);
+  }
+
+  @Get('/all')
+  async getAllClasses(@Req() req): Promise<Classes[]> {
+    if (req.user.isAdmin) return this.classesService.getAllClasses();
+    else throw new ForbiddenException();
   }
 
   @Get('/:id')
@@ -29,11 +52,23 @@ export class ClassesController {
     return this.classesService.getClassDetail(id);
   }
 
-
-  // dùng để import danh sách ban đầu:
   @Put('/studentList')
-  async setStudentList(@Req() req, @Body() setListStudentDto: SetListStudentDto) {
+  async setStudentList(
+    @Req() req,
+    @Body() setListStudentDto: SetListStudentDto,
+  ) {
     const { user } = req;
     return this.classesService.setListStudent(user, setListStudentDto);
+  }
+
+  @Post('/toggle-active')
+  @UseGuards(AuthGuard())
+  async toggleActive(
+    @Req() req,
+    @Body() toggleActiveDto: ToggleActiveDto,
+  ): Promise<Classes[]> {
+    if (req.user.isAdmin)
+      return this.classesService.toggleActiveClasses(toggleActiveDto);
+    else throw new ForbiddenException();
   }
 }

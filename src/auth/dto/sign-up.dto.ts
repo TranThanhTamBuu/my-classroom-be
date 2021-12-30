@@ -1,4 +1,10 @@
-import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 
 export class SignUpDto {
   @IsString()
@@ -22,4 +28,8 @@ export class SignUpDto {
     { message: 'Email is invalid.' },
   )
   email: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isAdmin: boolean;
 }

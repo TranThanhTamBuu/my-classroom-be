@@ -20,4 +20,16 @@ export class Users {
 
   @Column()
   studentId: string;
+
+  @Column({ default: true })
+  active: boolean;
+
+  @Column({ default: false })
+  isAdmin: boolean;
+
+  @Column({ default: false })
+  activation: boolean;
+
+  @Column({ default: new Date() })
+  createdAt: Date;
 }

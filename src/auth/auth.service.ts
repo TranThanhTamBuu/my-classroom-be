@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,6 +18,8 @@ import { JwtAccessToken } from './interfaces/jwt-access-token.interface';
 import { ThirdPartyDto } from './dto/third-party.dto';
 import { ThirdPartyPayload } from './interfaces/third-party-payload.interface';
 import { ChangeProfileDto } from './dto/change-profile.dto';
+import { ToggleActiveDto } from './dto/toggle-active-dto';
+import { ChangeStudentIdDto } from './dto/change-student-id-dto';
 
 @Injectable()
 export class AuthService {
@@ -25,23 +28,31 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(signUpDto: SignUpDto): Promise<JwtAccessToken> {
-    const { studentId, email, name, password } = signUpDto;
+  async signUp(
+    signUpDto: SignUpDto,
+    admin?: boolean,
+  ): Promise<JwtAccessToken | Users> {
+    const { studentId, email, name, password, isAdmin } = signUpDto;
+    console.log({ studentId, email, name, password, isAdmin });
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const isStudentExist = (await this.usersRepository.find({ studentId }))
       .length;
-    if (studentId && isStudentExist) {
+    if (studentId && isStudentExist)
       throw new ConflictException('Student ID has already been taken.');
-    }
+
+    if (studentId && isAdmin)
+      throw new ConflictException('Student must not be admin.');
 
     const user = this.usersRepository.create({
       email,
       name,
       password: hashedPassword,
       studentId,
+      isAdmin,
+      active: true,
     });
 
     try {
@@ -54,6 +65,7 @@ export class AuthService {
       }
     }
 
+    if (admin) return user;
     return await this.getAccessToken(user.email);
   }
 
@@ -68,6 +80,9 @@ export class AuthService {
     const user = await this.usersRepository.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      if (!user.active)
+        throw new UnauthorizedException('This user has been deactivated');
+
       return await this.getAccessToken(user.email);
     } else {
       throw new UnauthorizedException();
@@ -86,6 +101,11 @@ export class AuthService {
         exception: new UnauthorizedException(),
       };
 
+    if (!user.active)
+      return {
+        exception: new UnauthorizedException('This user has been deactivated'),
+      };
+
     await this.usersRepository.update({ email }, { photo });
     const { accessToken } = await this.getAccessToken(user.email);
 
@@ -98,7 +118,9 @@ export class AuthService {
     const { accessToken, exception } = thirdPartyPayload;
     return `${process.env.FE_URL}/oauth?accessToken=${
       accessToken || ''
-    }&statusCode=${exception?.getStatus() || ''}`;
+    }&statusCode=${exception?.getStatus() || ''}&message=${
+      exception?.message || ''
+    }`;
   }
 
   async getUser(userId: string): Promise<Users> {
@@ -109,6 +131,49 @@ export class AuthService {
     return this.usersRepository.findOne({ email: email });
   }
 
+  async getAllUsers(isAdmin: boolean): Promise<Users[]> {
+    return this.usersRepository.find({
+      where: {
+        isAdmin,
+      },
+    });
+  }
+
+  async toggleActiveUser(toggleActiveDto: ToggleActiveDto): Promise<Users[]> {
+    const { userIds, active } = toggleActiveDto;
+    return Promise.all(
+      userIds.map(async (userId) => {
+        const user = await this.usersRepository.findOne(userId);
+        user.active = active;
+        return this.usersRepository.save(user);
+      }),
+    );
+  }
+
+  async changeStudentId(
+    changeStudentIdDto: ChangeStudentIdDto,
+  ): Promise<Users> {
+    const { userId, studentId } = changeStudentIdDto;
+
+    const user = await this.usersRepository.findOne(userId);
+
+    if (!user) throw new NotFoundException();
+
+    if (!user.studentId)
+      throw new ConflictException(
+        'Can not set student id for teacher or admin',
+      );
+
+    const student = await this.usersRepository.findOne({
+      studentId: studentId,
+    });
+
+    if (student) throw new ConflictException('This Student Id has been used');
+
+    user.studentId = studentId;
+    return this.usersRepository.save(user);
+  }
+
   async getListUser(userIds: string[]): Promise<Users[]> {
     return this.usersRepository.findByIds(userIds);
   }
@@ -116,12 +181,15 @@ export class AuthService {
   async getListUserByStuId(stuId: string[]): Promise<Users[]> {
     return this.usersRepository.find({
       where: {
-        studentId: { $in: stuId } ,
+        studentId: { $in: stuId },
       },
     });
   }
 
-  async changeUserProfile(user: Users, changeProfileDto: ChangeProfileDto): Promise<Users> {
+  async changeUserProfile(
+    user: Users,
+    changeProfileDto: ChangeProfileDto,
+  ): Promise<Users> {
     const { name, studentId } = changeProfileDto;
     var aUser = null;
     if (studentId)
