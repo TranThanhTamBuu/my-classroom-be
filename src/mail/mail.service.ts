@@ -3,7 +3,7 @@ import Mail from 'nodemailer/lib/mailer';
 import * as path from 'path';
 import * as hbs from 'nodemailer-express-handlebars';
 import 'dotenv/config';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
@@ -11,7 +11,7 @@ export default class MailService {
   private readonly transporter: Mail;
 
   constructor(
-    private authService: AuthService,
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
   ) {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -41,16 +41,30 @@ export default class MailService {
   }
 
   async sendTestMail(): Promise<void> {
+    await this.sendMailActivation('boopro2000@gmail.com', 'Boo', '123');
+    await this.sendMailInviteClass('boopro2000@gmail.com', '123', 'Class Name');
+  }
+
+  async sendMailInviteClass(
+    invitedEmail: string,
+    link: string,
+    className: string,
+  ) {
+    const aUser = await this.authService.getUserByEmail(invitedEmail);
+    if (aUser == null) {
+      return;
+    }
     const email = {
       from: `"My classroom" <${process.env.EMAIL}>`,
-      to: 'tamtt@dgroup.co',
-      subject: 'Test Email',
-      template: 'test',
+      to: invitedEmail,
+      subject: 'Invite to join ' + className,
+      template: 'class-invitation',
       context: {
-        title: 'Test Email',
-        name: 'Tam Buu',
-        btnText: 'Activate',
-        btnLink: `${process.env.FE_URL}/activate/?token=asd12345`,
+        title: 'Invite to join ' + className,
+        name: aUser.name,
+        btnText: `Join ${className}`,
+        className,
+        btnLink: link,
       },
     };
 
@@ -61,21 +75,17 @@ export default class MailService {
     }
   }
 
-  async sendMail(invitedEmail: string, link: string, className: string) {
-    const aUser = await this.authService.getUserByEmail(invitedEmail);
-    if (aUser == null) {
-      return;
-    }
+  async sendMailActivation(mail: string, name: string, token: string) {
     const email = {
       from: `"My classroom" <${process.env.EMAIL}>`,
-      to: invitedEmail,
-      subject: 'Invite to join ' + className,
-      template: 'test',
+      to: mail,
+      subject: 'Welcome to My Classroom',
+      template: 'activation',
       context: {
-        title: 'Invite to join class' + className,
-        name: aUser.name,
+        title: 'Welcome to My Classroom',
+        name: name,
         btnText: 'Activate',
-        btnLink: link,
+        btnLink: `${process.env.BE_URL}/auth/activation/${token}`,
       },
     };
 

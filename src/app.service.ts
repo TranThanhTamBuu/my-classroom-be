@@ -12,11 +12,6 @@ export class AppService {
   ) {}
 
   async migrate(): Promise<void> {
-    await this.usersRepository.update(
-      {},
-      { isAdmin: false, createdAt: new Date() },
-    );
-
-    await this.classesRepository.update({}, { createdAt: new Date() });
+    await this.usersRepository.update({}, { activation: true });
   }
 }

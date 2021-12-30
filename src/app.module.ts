@@ -12,6 +12,7 @@ import { LinkModule } from './link/link.module';
 import { Link } from './link/link.entity';
 import { AssignmentsModule } from './assignment/assignment.module';
 import { Assignments } from './assignment/assignment.entity';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -27,8 +28,9 @@ import { Assignments } from './assignment/assignment.entity';
     AuthModule,
     LinkModule,
     AssignmentsModule,
+    MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailService],
+  providers: [AppService],
 })
 export class AppModule {}
