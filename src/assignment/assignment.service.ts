@@ -383,12 +383,13 @@ export class AssignmentsService {
             const acommnet = {
                 comment: comment,
                 time: Math.floor(Date.now() / 1000),
+                teacherId: user._id,
             }
             anAssignment.reviewRequestList[studentId].teacherComment.push(acommnet);
         }
         if (markAsFinal) {
             anAssignment.reviewRequestList[studentId].isFinal = true;
-            aClass.gradeList[studentId] = anAssignment.reviewRequestList[studentId].newGrade ? anAssignment.reviewRequestList[studentId].newGrade : anAssignment.reviewRequestList[studentId].currentGrade;
+            anAssignment.gradeList[studentId] = anAssignment.reviewRequestList[studentId].newGrade ? anAssignment.reviewRequestList[studentId].newGrade : anAssignment.reviewRequestList[studentId].currentGrade;
         }
         await this.assignmentsRepository.save(anAssignment);
         return true;
