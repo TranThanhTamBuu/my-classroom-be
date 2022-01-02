@@ -5,9 +5,10 @@ import { ClassesService } from './classes.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { Users } from 'src/auth/users.entity';
+import { CodeGenerate } from 'src/Utils/CodeGenerate';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Classes, Users]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Classes, Users]), AuthModule, CodeGenerate],
   controllers: [ClassesController],
   providers: [ClassesService],
   exports: [ClassesService],

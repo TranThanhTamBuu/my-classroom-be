@@ -71,4 +71,12 @@ export class ClassesController {
       return this.classesService.toggleActiveClasses(toggleActiveDto);
     else throw new ForbiddenException();
   }
+
+  @Get('/regen-enterCode')
+  async regenEnterCode() {
+    const isSuccess = await this.classesService.reGenEnterCodeForAll();
+    return {
+      isSuccess: isSuccess
+    };
+  }
 }

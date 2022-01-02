@@ -21,7 +21,7 @@ export class AssignmentsService {
 
     async getAllAssignmentOfClass(user: Users, classId: string): Promise<Assignments[]> {
         const aClass = await this.classesService.getAClass(classId);
-        if (user.studentId && aClass.students.includes(user.studentId.toString()) || aClass.teachers.includes(user._id.toString())) {
+        if ((user.studentId && aClass.students.includes(user.studentId.toString())) || aClass.teachers.includes(user._id.toString()) || user.isAdmin) {
             if (aClass.assignments)
                 return this.assignmentsRepository.find({
                     where: {
@@ -180,7 +180,7 @@ export class AssignmentsService {
         }
 
         const aClass = await this.classesService.getAClass(anAssignment.classId);
-        if (!aClass.teachers.includes(user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString()) && !user.isAdmin) {
             throw new UnauthorizedException();
         }
 

@@ -13,6 +13,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { SetGradeListDto } from './dto/set-gradeList.dto';
 import { SetListStudentDto } from './dto/set-list-student.dto';
 import { ToggleActiveDto } from './dto/toggle-active-dto';
+import { CodeGenerate } from 'src/Utils/CodeGenerate';
 
 @Injectable()
 export class ClassesService {
@@ -20,6 +21,7 @@ export class ClassesService {
     @InjectRepository(Classes) private classesRepository: Repository<Classes>,
     @InjectRepository(Users) private usersRepository: Repository<Users>,
     private authService: AuthService,
+    private codeGenerator: CodeGenerate,
   ) {}
 
   async getAllClasses(): Promise<Array<any>> {
@@ -57,7 +59,7 @@ export class ClassesService {
     creator: Users,
   ): Promise<Classes> {
     const { name, section, room, subject } = createClassDto;
-
+    const enterCode = this.codeGenerator.genCode(8);
     const newClass = this.classesRepository.create({
       name,
       section,
@@ -67,6 +69,7 @@ export class ClassesService {
       createdAt: new Date(),
       teachers: [creator._id.toString()],
       students: [],
+      enterCode,
     });
 
     return this.classesRepository.save(newClass);
@@ -103,6 +106,7 @@ export class ClassesService {
       students: listStudent,
       teachers: listTeacher,
       gradeList: aClass.gradeList,
+      enterCode: aClass.enterCode,
     });
   }
 
@@ -163,5 +167,45 @@ export class ClassesService {
         return this.classesRepository.save(aClass);
       }),
     );
+  }
+
+  async joinClassByCode(user: Users, code: string): Promise<any> {
+    const aClass = await this.classesRepository.findOne({ enterCode: code });
+    if (aClass == null) {
+      throw new NotFoundException('Class Not Found');
+    }
+    if (
+      (user.studentId &&
+        aClass.students &&
+        aClass.students.includes(user.studentId.toString())) ||
+      aClass.teachers.includes(user._id.toString())
+    ) {
+      throw new NotAcceptableException('You have already joined in this class');
+    }
+
+    if (user.studentId) {
+      // student join
+      if (aClass.students == null) {
+        aClass.students = [];
+      }
+      aClass.students.push(user.studentId);
+    } else {
+      // teacher join:
+      aClass.teachers.push(user._id.toString());
+    }
+    this.classesRepository.save(aClass);
+    return Promise.resolve({
+      success: true,
+      classId: aClass._id,
+    });
+  }
+  
+  async reGenEnterCodeForAll() {
+    const classList = await this.classesRepository.find();
+    classList.forEach((aClass) => {
+      aClass.enterCode = this.codeGenerator.genCode(8);
+    });
+    await this.classesRepository.save(classList);
+    return true;
   }
 }
