@@ -79,4 +79,11 @@ export class ClassesController {
       isSuccess: isSuccess
     };
   }
+
+  @Put('/enter-class/:code')
+  async joinClassByCode(@Req() req, @Param('code') code: string): Promise<any> {
+    const { user } = req;
+    const data = await this.classesService.joinClassByCode(user, code);
+    Promise.resolve(data);
+  }
 }
