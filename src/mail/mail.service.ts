@@ -95,4 +95,25 @@ export default class MailService {
       console.log(error);
     }
   }
+
+  async sendForgetPassword(mail: string, name: string, token: string) {
+    const email = {
+      from: `"My classroom" <${process.env.EMAIL}>`,
+      to: mail,
+      subject: 'Reset your password',
+      template: 'reset-password',
+      context: {
+        title: 'Reset My Classroom account password',
+        name: name,
+        btnText: 'Reset',
+        btnLink: `${process.env.FE_URL}/?tab=reset-password&token=${token}`,
+      },
+    };
+
+    try {
+      await this.transporter.sendMail(email);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

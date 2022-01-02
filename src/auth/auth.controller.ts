@@ -19,6 +19,8 @@ import { Users } from './users.entity';
 import { ChangeProfileDto } from './dto/change-profile.dto';
 import { ToggleActiveDto } from './dto/toggle-active-dto';
 import { ChangeStudentIdDto } from './dto/change-student-id-dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password-dto';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +41,20 @@ export class AuthController {
   @Post('/sign-in')
   async signIn(@Body() signInDto: SignInDto): Promise<JwtAccessToken> {
     return this.authService.signIn(signInDto);
+  }
+
+  @Post('/forgot-password')
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ success: boolean }> {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('/reset-password')
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ success: boolean }> {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 
   @Get('/activation/:token')

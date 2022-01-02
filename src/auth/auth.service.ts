@@ -21,6 +21,8 @@ import { ChangeProfileDto } from './dto/change-profile.dto';
 import { ToggleActiveDto } from './dto/toggle-active-dto';
 import { ChangeStudentIdDto } from './dto/change-student-id-dto';
 import MailService from 'src/mail/mail.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password-dto';
 
 @Injectable()
 export class AuthService {
@@ -97,6 +99,40 @@ export class AuthService {
     } else {
       throw new UnauthorizedException();
     }
+  }
+
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ success: boolean }> {
+    const { email } = forgotPasswordDto;
+    const user = await this.usersRepository.findOne({ email });
+
+    if (!user) throw new NotFoundException();
+
+    this.mailService.sendForgetPassword(
+      email,
+      user.name,
+      (await this.getAccessToken(user.email)).accessToken,
+    );
+
+    return { success: true };
+  }
+
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ success: boolean }> {
+    const { token, password } = resetPasswordDto;
+
+    const { email } = await this.jwtService.verify(token);
+    const user = await this.usersRepository.findOne({ email });
+    if (!user) throw new NotFoundException();
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+    user.password = hashedPassword;
+    await this.usersRepository.save(user);
+
+    return { success: true };
   }
 
   async activate(token: string): Promise<void> {
