@@ -46,4 +46,7 @@ export class Classes {
 
   @Column({ default: new Date() })
   createdAt: Date;
+
+  @Column()
+  enterCode: string;
 }
