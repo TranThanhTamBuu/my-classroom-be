@@ -136,7 +136,9 @@ export class AssignmentsService {
                     teacherId: user._id,
                     classId,
                     position: val.position,
-                    isFinalized: val.isFinalized,
+                    isFinalized: val.isFinalized ? val.isFinalized : false,
+                    gradeList: {},
+                    reviewRequestList: {},
                 });
                 newAssignmentList.push(newAssignment);
             }
