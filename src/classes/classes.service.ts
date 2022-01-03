@@ -94,6 +94,11 @@ export class ClassesService {
     const listStudent = await this.authService.getListUserByStuId(
       aClass.students,
     );
+     if (!aClass.enterCode)
+     {
+      aClass.enterCode = this.codeGenerator.genCode(8);
+      this.classesRepository.save(aClass);
+      }
     const listTeacher = await this.authService.getListUser(aClass.teachers);
     return Promise.resolve({
       success: true,
