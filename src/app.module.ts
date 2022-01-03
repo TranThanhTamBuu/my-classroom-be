@@ -13,6 +13,7 @@ import { AssignmentsModule } from './assignment/assignment.module';
 import { Assignments } from './assignment/assignment.entity';
 import { NotificationModule } from './notification/notification.module';
 import { Notification } from './notification/notification.entity';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { Notification } from './notification/notification.entity';
     LinkModule,
     AssignmentsModule,
     NotificationModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
