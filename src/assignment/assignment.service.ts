@@ -11,12 +11,16 @@ import { SetListGradeDto } from './dto/set-list-grade.dto';
 import { AddReviewRequestDto } from './dto/add-comment.dto';
 import { TeacherReviewRequest } from './dto/update-grade-review.dto';
 import { StudentUpdateReviewRequestDto } from './dto/student-update-review.dto';
+import { NotificationService } from 'src/notification/notification.service';
+import {AuthService} from 'src/auth/auth.service';
 
 @Injectable()
 export class AssignmentsService {
     constructor(
         @InjectRepository(Assignments) private assignmentsRepository: Repository<Assignments>,
         private classesService: ClassesService,
+        private notificationService: NotificationService,
+        private authService: AuthService,
     ) { }
 
     async getAllAssignmentOfClass(user: Users, classId: string): Promise<Assignments[]> {
@@ -105,7 +109,6 @@ export class AssignmentsService {
         const aClass = await this.classesService.getAClass(classId);
         if (!aClass.teachers.includes(user._id.toString()))
             throw new UnauthorizedException();
-        
         var newAssignmentList = [this.assignmentsRepository.create()];
         const assignTime = Date.now();
         for (let val of listAssignment) {
@@ -163,7 +166,7 @@ export class AssignmentsService {
         if (!aClass.teachers.includes(user._id.toString())) {
             throw new UnauthorizedException();
         }
-
+        const listStudent = await this.authService.getListUserByStuId(aClass.students);
         if (isImport || anAssignment.gradeList === null) {
             anAssignment.gradeList = {};
         }
@@ -172,6 +175,15 @@ export class AssignmentsService {
             anAssignment.gradeList[item.studentId] = item.grade;
         });
         anAssignment.isFinalized = isFinalized;
+        if (anAssignment.isFinalized) {
+            listStudent.forEach(val => {
+                this.notificationService.createAndSendNotification({
+                    user: val,
+                    receivedFromUser: user,
+                    description: anAssignment.title + ' is marked as finalized by ' + user.name,
+                })
+            })
+        }
         return this.assignmentsRepository.save(anAssignment);
     }
 
@@ -362,6 +374,15 @@ export class AssignmentsService {
         };
         anAssignment.reviewRequestList[user.studentId.toString()] = temp;
         await this.assignmentsRepository.save(anAssignment);
+        // send noti to teacher:
+        const listTeacher = await this.authService.getListUser(aClass.teachers);
+        listTeacher.forEach(val => {
+            this.notificationService.createAndSendNotification({
+                user: val,
+                receivedFromUser: user,
+                description: anAssignment.title + ': You receive a grade review from ' + user.name,
+            })
+        })
         return temp;
     }
 
@@ -381,6 +402,8 @@ export class AssignmentsService {
         if (newGrade) {
             anAssignment.reviewRequestList[studentId].newGrade = newGrade;
         }
+        const student = await this.authService.getListUserByStuId([studentId]);
+        var description = '';
         if (comment) {
             const acommnet = {
                 comment: comment,
@@ -388,11 +411,18 @@ export class AssignmentsService {
                 teacherId: user._id,
             }
             anAssignment.reviewRequestList[studentId].teacherComment.push(acommnet);
+            description = anAssignment.title + ": You receive a comment from teacher: " + user.name;
         }
         if (markAsFinal) {
             anAssignment.reviewRequestList[studentId].isFinal = true;
             anAssignment.gradeList[studentId] = anAssignment.reviewRequestList[studentId].newGrade ? anAssignment.reviewRequestList[studentId].newGrade : anAssignment.reviewRequestList[studentId].currentGrade;
+            description = anAssignment.title + ": Your comment is marked as final by: " + user.name;
         }
+        this.notificationService.createAndSendNotification({
+            user: student[0],
+            receivedFromUser: user,
+            description: description,
+        });
         await this.assignmentsRepository.save(anAssignment);
         return true;
     }
@@ -450,6 +480,15 @@ export class AssignmentsService {
             anAssignment.reviewRequestList[user.studentId.toString()].expectedGrade = expectedGrade;
         }
         await this.assignmentsRepository.save(anAssignment);
+        // send noti to teacher:
+        const listTeacher = await this.authService.getListUser(aClass.teachers);
+        listTeacher.forEach(val => {
+            this.notificationService.createAndSendNotification({
+                user: val,
+                receivedFromUser: user,
+                description: anAssignment.title + ': A revire request is updated by ' + user.name,
+            })
+        });
         return true;
     }
 

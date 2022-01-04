@@ -86,4 +86,12 @@ export class ClassesController {
     const data = await this.classesService.joinClassByCode(user, code);
     Promise.resolve(data);
   }
+
+  @Get('list-classes/:id')
+  async getListClassOfUser(@Req() req, @Param('id') userId: string): Promise<any> {
+    const { user } = req;
+    const data = await this.classesService.getUserClass(user, userId);
+    Promise.resolve(data);
+  }
+  
 }
