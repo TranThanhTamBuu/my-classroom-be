@@ -213,4 +213,41 @@ export class ClassesService {
     await this.classesRepository.save(classList);
     return true;
   }
+
+  async getUserClass(user: Users, userId: string): Promise<any> {
+    if (!user.isAdmin) {
+      throw new NotAcceptableException('You are not admin');
+    }
+    var findUser = await this.authService.getUser(userId);
+    if (!findUser) {
+      throw new NotFoundException('Not Found User ID');
+    }
+    var listClass: Classes[];
+    if (!findUser.studentId) {
+      listClass = await this.classesRepository.find({
+        where: {
+          $or: [
+            { teachers: { $all: [userId] } },
+            { createdBy: userId },
+          ],
+          active: true,
+        },
+      });
+    } else {
+      listClass = await this.classesRepository.find({
+        where: {
+          students: { $all: [findUser.studentId] },
+          active: true,
+        },
+      });
+    }
+    var res: any = [];
+    listClass.forEach(val => {
+      res.push({
+        classId: val._id,
+        className: val.name
+      });
+    })
+    return res;
+  }
 }
