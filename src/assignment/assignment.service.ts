@@ -501,6 +501,14 @@ export class AssignmentsService {
         if (!aClass.teachers.includes(user._id.toString())) {
             throw new NotAcceptableException();
         }
+        if (!anAssignment.isFinalized && isFinalized) {
+            const listStudent = await this.authService.getListUserByStuId(aClass.students);
+            listStudent.forEach((val) => this.notificationService.createAndSendNotification({
+                user: val,
+                receivedFromUser: user,
+                description: anAssignment.title + ' is marked as finalized by ' + user.name,
+            }));
+        }
         anAssignment.isFinalized = isFinalized;
         await this.assignmentsRepository.save(anAssignment);
         return true;
