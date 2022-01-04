@@ -26,6 +26,7 @@ export class AppService {
       user,
       receivedFromUser,
       description: 'Hello world',
+      classId: 'lopabc',
     });
   }
 }

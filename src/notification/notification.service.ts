@@ -10,6 +10,7 @@ interface ICreateNotification {
   user: Users;
   receivedFromUser: Users;
   description: string;
+  classId: string;
 }
 
 @Injectable()
@@ -63,12 +64,13 @@ export class NotificationService {
   private async createNotification(
     notification: ICreateNotification,
   ): Promise<Notification> {
-    const { user, receivedFromUser, description } = notification;
+    const { user, receivedFromUser, description, classId } = notification;
     const newNotification = this.notificationRepository.create({
       userId: user._id,
       receivedFromUserId: receivedFromUser._id,
       description,
       createdAt: new Date(),
+      classId,
     });
 
     return await this.notificationRepository.save(newNotification);
