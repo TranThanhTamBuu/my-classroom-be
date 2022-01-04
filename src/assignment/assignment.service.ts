@@ -181,6 +181,7 @@ export class AssignmentsService {
                     user: val,
                     receivedFromUser: user,
                     description: anAssignment.title + ' is marked as finalized by ' + user.name,
+                    classId: aClass._id,
                 })
             })
         }
@@ -381,6 +382,7 @@ export class AssignmentsService {
                 user: val,
                 receivedFromUser: user,
                 description: anAssignment.title + ': You receive a grade review from ' + user.name,
+                classId: aClass._id,
             })
         })
         return temp;
@@ -422,6 +424,7 @@ export class AssignmentsService {
             user: student[0],
             receivedFromUser: user,
             description: description,
+            classId: aClass._id,
         });
         await this.assignmentsRepository.save(anAssignment);
         return true;
@@ -487,6 +490,7 @@ export class AssignmentsService {
                 user: val,
                 receivedFromUser: user,
                 description: anAssignment.title + ': A revire request is updated by ' + user.name,
+                classId: aClass._id,
             })
         });
         return true;
@@ -507,6 +511,7 @@ export class AssignmentsService {
                 user: val,
                 receivedFromUser: user,
                 description: anAssignment.title + ' is marked as finalized by ' + user.name,
+                classId: aClass._id,
             }));
         }
         anAssignment.isFinalized = isFinalized;

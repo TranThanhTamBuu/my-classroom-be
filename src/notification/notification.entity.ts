@@ -20,4 +20,7 @@ export class Notification {
 
   @Column({ default: false })
   isRead: boolean;
+
+  @Column()
+  classId: string;
 }
