@@ -91,7 +91,7 @@ export class ClassesController {
   async getListClassOfUser(@Req() req, @Param('id') userId: string): Promise<any> {
     const { user } = req;
     const data = await this.classesService.getUserClass(user, userId);
-    Promise.resolve(data);
+    return Promise.resolve(data);
   }
   
 }
