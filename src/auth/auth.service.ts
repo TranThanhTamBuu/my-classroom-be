@@ -57,6 +57,7 @@ export class AuthService {
       isAdmin,
       active: true,
       createdAt: new Date(),
+      activation: isAdmin ? true : undefined
     });
 
     try {
