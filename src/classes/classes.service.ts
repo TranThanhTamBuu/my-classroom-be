@@ -70,6 +70,7 @@ export class ClassesService {
       teachers: [creator._id.toString()],
       students: [],
       enterCode,
+      active: true,
     });
 
     return this.classesRepository.save(newClass);
