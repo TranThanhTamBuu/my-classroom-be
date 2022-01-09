@@ -19,10 +19,6 @@ export default class MailService {
         user: process.env.EMAIL,
         pass: process.env.PASSWORD,
       },
-      secure: true,
-      tls: {
-        rejectUnauthorized: false,
-      },
     });
 
     this.transporter.use(
