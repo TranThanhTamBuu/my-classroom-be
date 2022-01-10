@@ -260,7 +260,7 @@ export class AssignmentsService {
         if (aClass === null) {
             throw new NotFoundException();
         }
-        if (!aClass.teachers.includes(user._id.toString())) {
+        if (!aClass.teachers.includes(user._id.toString()) && !user.isAdmin) {
             throw new NotAcceptableException();
         }
         if (aClass.assignments == null) {
@@ -437,7 +437,7 @@ export class AssignmentsService {
         }
         const aClass = await this.classesService.getAClass(anAssignment.classId);
         if (!user.studentId) {
-            if (!aClass.teachers.includes(user._id.toString())) {
+            if (!aClass.teachers.includes(user._id.toString()) && !user.isAdmin) {
                 throw new NotAcceptableException();
             }
             return {
